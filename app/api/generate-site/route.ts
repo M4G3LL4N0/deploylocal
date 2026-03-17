@@ -57,7 +57,7 @@ Make it sound professional, trustworthy, and locally focused. Use a premium tone
     const content = data.choices[0].message.content;
 
     // Clean the response to extract JSON
-    const jsonMatch = content.match(/\{.*\}/s);
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json(
         { error: "Invalid response format" },

@@ -9,9 +9,9 @@ export default function Home() {
   const [businessType, setBusinessType] = useState("");
   const [generatedSite, setGeneratedSite] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -32,7 +32,7 @@ export default function Home() {
       const data = await response.json();
       setGeneratedSite(data);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }

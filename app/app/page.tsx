@@ -1,46 +1,97 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AppPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login')
-  }
-
-  const signOut = async () => {
-    'use server'
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    redirect('/login')
+    redirect("/login");
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <span className="text-xl font-bold text-gray-900">DeployLocal.app</span>
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
+              Dashboard
             </div>
-            <div className="flex items-center">
-              <form action={signOut}>
-                <button type="submit" className="text-gray-700 hover:text-gray-900">
-                  Sign out
-                </button>
-              </form>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+              Welcome to DeployLocal
+            </h1>
+            <p className="mt-3 max-w-2xl text-zinc-400">
+              Search businesses, score leads, generate websites, and build your
+              outreach queue.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/app/leads"
+              className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black"
+            >
+              View Leads
+            </Link>
+            <Link
+              href="/app/generate"
+              className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
+            >
+              Generate Site
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Signed in as</div>
+            <div className="mt-2 text-lg font-semibold">{user.email}</div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Lead Engine</div>
+            <div className="mt-2 text-lg font-semibold">Ready</div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Site Generator</div>
+            <div className="mt-2 text-lg font-semibold">Ready</div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-2xl font-semibold">Next Steps</h2>
+            <ul className="mt-4 space-y-3 text-zinc-400">
+              <li>• Search local businesses by city and category</li>
+              <li>• Score the strongest website opportunities</li>
+              <li>• Generate a site preview in one click</li>
+              <li>• Build your daily outreach queue</li>
+            </ul>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-2xl font-semibold">Quick Actions</h2>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/app/leads"
+                className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black"
+              >
+                Open Leads
+              </Link>
+              <Link
+                href="/app/queue"
+                className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
+              >
+                Open Queue
+              </Link>
             </div>
           </div>
         </div>
-      </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
-            <p className="text-gray-500">Welcome to your dashboard, {user.email}!</p>
-          </div>
-        </div>
-      </main>
-    </div>
-  )
+      </div>
+    </main>
+  );
 }
