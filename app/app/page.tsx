@@ -1,16 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function AppPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireAdmin();
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -18,50 +10,50 @@ export default async function AppPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-              Dashboard
+              Admin Dashboard
             </div>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-              Welcome to DeployLocal
+              Welcome, Admin
             </h1>
             <p className="mt-3 max-w-2xl text-zinc-400">
-              Search businesses, score leads, generate websites, and build your
-              outreach queue.
+              Search businesses, score leads, generate websites, and build your outreach queue.
             </p>
           </div>
-
           <div className="flex flex-wrap gap-3">
             <Link
               href="/app/leads"
               className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black"
             >
-              View Leads
+              Leads
             </Link>
             <Link
-              href="/app/generate"
+              href="/app/queue"
               className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
             >
-              Generate Site
+              Queue
+            </Link>
+            <Link
+              href="/app/sites"
+              className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
+            >
+              Sites
             </Link>
           </div>
         </div>
-
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Signed in as</div>
             <div className="mt-2 text-lg font-semibold">{user.email}</div>
           </div>
-
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Lead Engine</div>
             <div className="mt-2 text-lg font-semibold">Ready</div>
           </div>
-
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Site Generator</div>
             <div className="mt-2 text-lg font-semibold">Ready</div>
           </div>
         </div>
-
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-2xl font-semibold">Next Steps</h2>
@@ -72,7 +64,6 @@ export default async function AppPage() {
               <li>• Build your daily outreach queue</li>
             </ul>
           </div>
-
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <h2 className="text-2xl font-semibold">Quick Actions</h2>
             <div className="mt-4 flex flex-wrap gap-3">
@@ -87,6 +78,12 @@ export default async function AppPage() {
                 className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
               >
                 Open Queue
+              </Link>
+              <Link
+                href="/app/sites"
+                className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
+              >
+                Open Sites
               </Link>
             </div>
           </div>

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 type LeadResult = {
   id: string;
@@ -27,6 +29,7 @@ type SearchResponse = {
 
 export default function LeadsPage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("");
@@ -36,6 +39,26 @@ export default function LeadsPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<LeadResult[]>([]);
+
+  useEffect(() => {
+    // Check admin role on mount
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (!profile || profile.role !== "admin") {
+        router.replace("/login");
+      }
+    })();
+    // eslint-disable-next-line
+  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
