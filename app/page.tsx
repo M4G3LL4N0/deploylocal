@@ -1,102 +1,119 @@
 import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-7xl px-6 py-24">
-        <div className="flex flex-col gap-16 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-2xl">
-            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-2">
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
               DeployLocal
             </div>
-            <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
-              The dual engine for local business growth.
+
+            <h1 className="mt-6 text-5xl font-semibold tracking-tight sm:text-6xl">
+              Launch websites fast. Find leads faster.
             </h1>
-            <p className="mt-6 text-lg text-zinc-400">
-              <span className="font-semibold text-white">DeployLocal</span> is a two-sided SaaS platform:
-              <br />
-              <span className="font-semibold text-white">1. Admins</span> find, score, and generate sites for local businesses—then manage outreach and sales.
-              <br />
-              <span className="font-semibold text-white">2. Clients</span> get a portal to manage their new site, upgrade, and access exclusive tools.
+
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
+              DeployLocal gives businesses a fast AI website builder — and gives
+              the owner/admin a private lead engine to discover, score, and
+              generate websites for local businesses before outreach.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+
+            <div className="mt-10 flex flex-wrap gap-4">
               <Link
                 href="/builder"
                 className="rounded-full bg-white px-6 py-3 text-sm font-medium text-black"
               >
-                Try the Builder
+                Build Your Website
               </Link>
+
               <Link
                 href="/app"
-                className="rounded-full border border-white/20 px-6 py-3 text-sm text-white"
+                className="rounded-full border border-white/15 px-6 py-3 text-sm text-white"
               >
                 Admin Dashboard
               </Link>
             </div>
+
+            <div className="mt-10 grid gap-4 text-sm text-zinc-400 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                Public website builder
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                Private lead engine
+              </div>
+            </div>
           </div>
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-zinc-400">What DeployLocal Does</div>
-            <div className="mt-6 flex flex-col gap-4 text-sm text-zinc-300">
-              <div>• Scrapes & scores local businesses</div>
-              <div>• Detects missing/weak websites</div>
-              <div>• Instantly generates high-converting sites</div>
-              <div>• Admin dashboard for outreach & sales</div>
-              <div>• Client portal for site management</div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="text-sm font-medium">DeployLocal has two engines</div>
+
+            <div className="mt-8 grid gap-6">
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+                <div className="text-sm uppercase tracking-[0.15em] text-zinc-500">
+                  For businesses
+                </div>
+                <h2 className="mt-3 text-2xl font-semibold">
+                  Build a website quickly
+                </h2>
+                <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <li>• Generate a website in minutes</li>
+                  <li>• Preview it on a DeployLocal subdomain</li>
+                  <li>• Log in to review and activate it</li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+                <div className="text-sm uppercase tracking-[0.15em] text-zinc-500">
+                  For the owner/admin
+                </div>
+                <h2 className="mt-3 text-2xl font-semibold">
+                  Find, score, and generate before outreach
+                </h2>
+                <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+                  <li>• Find local businesses with missing or weak websites</li>
+                  <li>• Score the best opportunities first</li>
+                  <li>• Generate websites instantly from a private dashboard</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
-        <div className="mt-24 grid gap-6 md:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-zinc-400">Step 1</div>
-            <div className="mt-2 text-xl font-semibold">
-              Find & Score Businesses
+      </section>
+
+      <section className="border-t border-white/10">
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-sm text-zinc-400">Public product</div>
+              <h3 className="mt-3 text-2xl font-semibold">Website builder</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                A self-serve builder for businesses who visit DeployLocal and want
+                a fast site creation flow.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-zinc-400">
-              Search any city + category and get ranked leads instantly.
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-zinc-400">Step 2</div>
-            <div className="mt-2 text-xl font-semibold">
-              Generate & Preview Sites
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-sm text-zinc-400">Private system</div>
+              <h3 className="mt-3 text-2xl font-semibold">Lead intelligence</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                A private admin dashboard that searches local businesses, detects
+                website gaps, and ranks which leads should be targeted now.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-zinc-400">
-              One click creates a live, high-converting site you can show or sell.
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-zinc-400">Step 3</div>
-            <div className="mt-2 text-xl font-semibold">
-              Sell & Onboard Clients
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-sm text-zinc-400">Client portal</div>
+              <h3 className="mt-3 text-2xl font-semibold">Secure previews</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                Prospects and customers log in to preview their site under a
+                controlled DeployLocal workflow before activation.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-zinc-400">
-              Close deals, then invite clients to their own portal for upgrades and management.
-            </p>
           </div>
         </div>
-        <div className="mt-24 flex flex-col items-center text-center">
-          <h2 className="text-3xl font-semibold">
-            DeployLocal is not just a website builder.
-          </h2>
-          <p className="mt-4 max-w-xl text-zinc-400">
-            It’s a full distribution engine for local business growth—combining lead generation, instant site creation, and client onboarding.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              href="/builder"
-              className="rounded-full bg-white px-8 py-4 text-sm font-medium text-black"
-            >
-              Try the Builder
-            </Link>
-            <Link
-              href="/app"
-              className="rounded-full border border-white/20 px-8 py-4 text-sm text-white"
-            >
-              Admin Dashboard
-            </Link>
-          </div>
-        </div>
-      </div>
+      </section>
     </main>
   );
 }

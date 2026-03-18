@@ -1,49 +1,89 @@
+import { notFound } from "next/navigation";
 import { requireClient } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 
-type Site = {
-  id: string;
-  business_name: string;
-  subdomain: string;
-  status: string;
-  site_json: any;
+type SiteJson = {
+  headline?: string;
+  subheadline?: string;
+  services?: string[];
+  about?: string;
+  cta?: string;
+  faq?: { question: string; answer: string }[];
 };
 
 export default async function ClientSiteDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const user = await requireClient();
-  const supabase = await createClient();
+  const { id } = await params;
+  const { supabase, user } = await requireClient();
 
-  const { data: site, error } = await supabase
+  const { data: site } = await supabase
     .from("generated_sites")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("client_user_id", user.id)
     .single();
 
   if (!site) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-zinc-400">Site not found.</div>
-      </main>
-    );
+    notFound();
   }
 
+  const siteJson = (site.site_json ?? {}) as SiteJson;
+
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-2xl px-6 py-24">
-        <h1 className="text-3xl font-bold mb-4">{site.business_name}</h1>
-        <div className="mb-2 text-zinc-400">
-          Subdomain: <span className="font-mono">{site.subdomain}.deploylocal.app</span>
+    <main className="min-h-screen bg-black px-6 py-20 text-white">
+      <div className="mx-auto max-w-6xl">
+        <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
+          Website Preview
         </div>
-        <div className="mb-2 text-zinc-400">Status: {site.status}</div>
-        <div className="mb-6">
-          <pre className="bg-black/40 rounded p-2 text-xs text-zinc-300 overflow-x-auto">
-            {JSON.stringify(site.site_json, null, 2)}
-          </pre>
+        <h1 className="mt-4 text-5xl font-semibold tracking-tight">
+          {site.business_name}
+        </h1>
+        <p className="mt-4 text-zinc-400">
+          Preview status: {site.status} · Subdomain: {site.subdomain}.deploylocal.app
+        </p>
+
+        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
+          <section>
+            <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+              Hero
+            </div>
+            <h2 className="mt-3 text-4xl font-semibold">
+              {siteJson.headline || site.business_name}
+            </h2>
+            <p className="mt-4 max-w-2xl text-zinc-400">
+              {siteJson.subheadline || "Your generated website preview appears here."}
+            </p>
+            <div className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-medium text-black">
+              {siteJson.cta || "Request Activation"}
+            </div>
+          </section>
+
+          <section className="mt-10">
+            <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+              Services
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {(siteJson.services || []).map((service) => (
+                <div
+                  key={service}
+                  className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                >
+                  {service}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-10">
+            <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+              About
+            </div>
+            <p className="mt-4 text-zinc-400">
+              {siteJson.about || "No about section has been generated yet."}
+            </p>
+          </section>
         </div>
       </div>
     </main>
