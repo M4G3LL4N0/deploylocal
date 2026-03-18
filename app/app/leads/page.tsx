@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 type LeadResult = {
   id: string;
@@ -29,7 +27,6 @@ type SearchResponse = {
 
 export default function LeadsPage() {
   const supabase = createClient();
-  const router = useRouter();
 
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("");
@@ -39,26 +36,6 @@ export default function LeadsPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<LeadResult[]>([]);
-
-  useEffect(() => {
-    // Check admin role on mount
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      if (!profile || profile.role !== "admin") {
-        router.replace("/login");
-      }
-    })();
-    // eslint-disable-next-line
-  }, []);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -87,9 +64,8 @@ export default function LeadsPage() {
 
       setResults((data as SearchResponse).results || []);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      setError(message);
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -114,7 +90,7 @@ export default function LeadsPage() {
         throw new Error("Please log in first.");
       }
 
-      const leadsToInsert = results.map((lead: LeadResult) => ({
+      const leadsToInsert = results.map((lead) => ({
         user_id: user.id,
         external_id: lead.id,
         business_name: lead.business_name,
@@ -130,35 +106,20 @@ export default function LeadsPage() {
         status: "new",
       }));
 
-      const insertPromises = leadsToInsert.map((lead: {
-        user_id: string;
-        external_id: string;
-        business_name: string;
-        category: string;
-        phone: string;
-        address: string;
-        city: string;
-        website_url: string | null;
-        has_website: boolean;
-        rating: number | null;
-        review_count: number | null;
-        score: number;
-        status: string;
-      }) =>
+      const insertPromises = leadsToInsert.map((lead) =>
         supabase.from("leads").insert(lead).select("id").single()
       );
 
       const insertResults = await Promise.allSettled(insertPromises);
 
       const successCount = insertResults.filter(
-        (result: PromiseSettledResult<unknown>) => result.status === "fulfilled"
+        (result) => result.status === "fulfilled"
       ).length;
 
       setMessage(`Saved ${successCount} lead${successCount === 1 ? "" : "s"}.`);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to save leads";
-      setError(message);
+      const msg = err instanceof Error ? err.message : "Failed to save leads";
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -170,15 +131,14 @@ export default function LeadsPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
             <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-              Lead Engine
+              Admin Lead Engine
             </div>
             <h1 className="mt-4 text-5xl font-semibold tracking-tight">
-              Find local businesses worth targeting first.
+              Private lead discovery dashboard
             </h1>
             <p className="mt-4 text-lg text-zinc-400">
-              Search by city, category, and radius. DeployLocal scores which
-              businesses are strongest candidates for instant website generation
-              and outreach.
+              This is admin-only. Search local businesses, detect weak or missing
+              websites, score the best opportunities, and save them into your lead system.
             </p>
           </div>
 
@@ -272,7 +232,7 @@ export default function LeadsPage() {
                     </td>
                   </tr>
                 ) : (
-                  results.map((lead: LeadResult) => (
+                  results.map((lead) => (
                     <tr
                       key={lead.id}
                       className="border-b border-white/5 last:border-b-0"
