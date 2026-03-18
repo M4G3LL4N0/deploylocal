@@ -1,40 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-type GenerateAndSaveBody = {
-  businessName?: string;
-  category?: string;
-  city?: string;
-  leadId?: string | null;
-};
-
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40);
-}
-
-function uniqueSubdomain(base: string) {
-  const suffix = Math.random().toString(36).slice(2, 7);
-  return `${base}-${suffix}`;
+function createPreviewToken() {
+  return crypto.randomUUID().replace(/-/g, "");
 }
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as GenerateAndSaveBody;
-    const businessName = body.businessName?.trim();
-    const category = body.category?.trim();
-    const city = body.city?.trim();
-    const leadId = body.leadId ?? null;
-
-    if (!businessName || !category || !city) {
-      return NextResponse.json(
-        { error: "Missing businessName, category, or city" },
-        { status: 400 }
-      );
-    }
+    const { businessName, category, city, leadId } = await req.json();
 
     const supabase = await createClient();
 
@@ -46,7 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     const genRes = await fetch(`${appUrl}/api/generate-site`, {
       method: "POST",
@@ -54,7 +27,6 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ businessName, category, city }),
-      cache: "no-store",
     });
 
     const genData = await genRes.json();
@@ -66,13 +38,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const site = genData.site;
-    const suggestedSubdomain =
-      typeof genData.subdomain === "string" && genData.subdomain.length > 0
-        ? genData.subdomain
-        : slugify(businessName);
-
-    const subdomain = uniqueSubdomain(suggestedSubdomain);
+    const { site, subdomain } = genData;
 
     const { data, error } = await supabase
       .from("generated_sites")
@@ -85,7 +51,8 @@ export async function POST(req: Request) {
         site_json: site,
         site_type: "admin_generated",
         status: "preview",
-        lead_id: leadId,
+        preview_token: createPreviewToken(),
+        lead_id: leadId || null,
       })
       .select()
       .single();
@@ -97,11 +64,11 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       site: data,
-      previewPath: `/sites/${subdomain}`,
+      previewUrl: `${appUrl}/sites/${data.subdomain}?token=${data.preview_token}`,
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to generate and save site";
+      error instanceof Error ? error.message : "Failed";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
