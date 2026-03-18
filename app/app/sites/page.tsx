@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 
 export default async function AdminSitesPage() {
@@ -17,6 +18,9 @@ export default async function AdminSitesPage() {
         <h1 className="mt-4 text-5xl font-semibold tracking-tight">
           Generated websites
         </h1>
+        <p className="mt-4 max-w-3xl text-lg text-zinc-400">
+          Use the internal preview path now. Wildcard subdomains can be enabled later.
+        </p>
 
         <div className="mt-10 overflow-hidden rounded-3xl border border-white/10 bg-white/5">
           <div className="overflow-x-auto">
@@ -55,25 +59,26 @@ export default async function AdminSitesPage() {
                         {site.subdomain}.deploylocal.app
                       </td>
                       <td className="px-4 py-4 text-zinc-300">{site.site_type}</td>
-                      <td className="px-4 py-4 flex items-center">
-                        {site.status}
-                        <div 
-                          className={`badge px-2 py-1 rounded ${
-                            site.status === 'active' ? 'bg-green-300' : 'bg-gray-300'
-                          } text-white`}
-                        >
+                      <td className="px-4 py-4">
+                        <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white">
                           {site.status}
-                        </div>
+                        </span>
                       </td>
                       <td className="px-4 py-4">
-                        <a
-                          href={`https://${site.subdomain}.deploylocal.app`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 underline"
-                        >
-                          Preview
-                        </a>
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={`/sites/${site.subdomain}`}
+                            className="rounded-full bg-white px-4 py-2 text-xs font-medium text-black"
+                          >
+                            Preview
+                          </Link>
+                          <button
+                            type="button"
+                            className="rounded-full border border-white/15 px-4 py-2 text-xs text-white"
+                          >
+                            Copy Preview Path
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
