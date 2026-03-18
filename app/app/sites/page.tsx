@@ -29,13 +29,14 @@ export default async function AdminSitesPage() {
                   <th className="px-4 py-4 font-medium">Subdomain</th>
                   <th className="px-4 py-4 font-medium">Type</th>
                   <th className="px-4 py-4 font-medium">Status</th>
+                  <th className="px-4 py-4 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {!sites || sites.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-10 text-center text-zinc-500"
                     >
                       No generated sites yet.
@@ -54,7 +55,26 @@ export default async function AdminSitesPage() {
                         {site.subdomain}.deploylocal.app
                       </td>
                       <td className="px-4 py-4 text-zinc-300">{site.site_type}</td>
-                      <td className="px-4 py-4 text-zinc-300">{site.status}</td>
+                      <td className="px-4 py-4 flex items-center">
+                        {site.status}
+                        <div 
+                          className={`badge px-2 py-1 rounded ${
+                            site.status === 'active' ? 'bg-green-300' : 'bg-gray-300'
+                          } text-white`}
+                        >
+                          {site.status}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <a
+                          href={`https://${site.subdomain}.deploylocal.app`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                        >
+                          Preview
+                        </a>
+                      </td>
                     </tr>
                   ))
                 )}
