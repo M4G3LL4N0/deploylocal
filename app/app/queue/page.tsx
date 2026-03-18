@@ -1,17 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function QueuePage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireAdmin();
 
   const { data: leads, error } = await supabase
     .from("leads")
@@ -49,22 +40,30 @@ export default async function QueuePage() {
               View Leads
             </Link>
             <Link
-              href="/app/generate"
+              href="/app/sites"
               className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black"
             >
-              Generate Site
+              View Sites
             </Link>
           </div>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
+        <div className="mt-10 grid gap-4 md:grid-cols-4">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Queued Leads</div>
             <div className="mt-2 text-3xl font-semibold">{leads?.length ?? 0}</div>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-zinc-400">Top Priority Threshold</div>
-            <div className="mt-2 text-3xl font-semibold">80+</div>
+            <div className="text-sm text-zinc-400">Top Priority</div>
+            <div className="mt-2 text-3xl font-semibold">
+              {leads?.[0]?.score ?? 0}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Missing Websites</div>
+            <div className="mt-2 text-3xl font-semibold">
+              {(leads || []).filter((lead) => !lead.has_website).length}
+            </div>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Suggested Action</div>
@@ -83,8 +82,7 @@ export default async function QueuePage() {
                   <th className="px-4 py-4 font-medium">Category</th>
                   <th className="px-4 py-4 font-medium">City</th>
                   <th className="px-4 py-4 font-medium">Website</th>
-                  <th className="px-4 py-4 font-medium">Rating</th>
-                  <th className="px-4 py-4 font-medium">Reviews</th>
+                  <th className="px-4 py-4 font-medium">Status</th>
                   <th className="px-4 py-4 font-medium">Action</th>
                 </tr>
               </thead>
@@ -92,7 +90,7 @@ export default async function QueuePage() {
                 {!leads || leads.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={8}
                       className="px-4 py-10 text-center text-zinc-500"
                     >
                       No prioritized leads yet. Search businesses first.
@@ -141,10 +139,7 @@ export default async function QueuePage() {
                         )}
                       </td>
                       <td className="px-4 py-4 text-zinc-300">
-                        {lead.rating ?? "—"}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-300">
-                        {lead.review_count ?? "—"}
+                        {lead.outreach_status || "new"}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-2">
@@ -154,12 +149,14 @@ export default async function QueuePage() {
                           >
                             View Lead
                           </Link>
-                          <Link
-                            href="/app/generate"
-                            className="rounded-full bg-white px-3 py-2 text-xs font-medium text-black"
-                          >
-                            Generate
-                          </Link>
+                          {lead.generated_site_id ? (
+                            <Link
+                              href={`/app/sites/${lead.generated_site_id}`}
+                              className="rounded-full bg-white px-3 py-2 text-xs font-medium text-black"
+                            >
+                              View Site
+                            </Link>
+                          ) : null}
                         </div>
                       </td>
                     </tr>

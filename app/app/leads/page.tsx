@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -33,15 +33,24 @@ export default function LeadsPage() {
   const [radius, setRadius] = useState("5000");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [results, setResults] = useState<LeadResult[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const topFiveIds = useMemo(
+    () => results.slice(0, 5).map((lead) => lead.id),
+    [results]
+  );
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
     setMessage("");
+    setResults([]);
+    setSelectedIds([]);
 
     try {
       const res = await fetch("/api/search-businesses", {
@@ -62,7 +71,9 @@ export default function LeadsPage() {
         throw new Error("error" in data ? data.error : "Search failed");
       }
 
-      setResults((data as SearchResponse).results || []);
+      const leads = (data as SearchResponse).results || [];
+      setResults(leads);
+      setSelectedIds(leads.slice(0, 5).map((lead) => lead.id));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       setError(msg);
@@ -90,39 +101,118 @@ export default function LeadsPage() {
         throw new Error("Please log in first.");
       }
 
-      const leadsToInsert = results.map((lead) => ({
-        user_id: user.id,
-        external_id: lead.id,
-        business_name: lead.business_name,
-        category: lead.category,
-        phone: lead.phone,
-        address: lead.address,
-        city: lead.city,
-        website_url: lead.website_url,
-        has_website: lead.has_website,
-        rating: lead.rating,
-        review_count: lead.review_count,
-        score: lead.score,
-        status: "new",
-      }));
+      const res = await fetch("/api/save-search-results", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          results,
+        }),
+      });
 
-      const insertPromises = leadsToInsert.map((lead) =>
-        supabase.from("leads").insert(lead).select("id").single()
-      );
+      const data = await res.json();
 
-      const insertResults = await Promise.allSettled(insertPromises);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save leads");
+      }
 
-      const successCount = insertResults.filter(
-        (result) => result.status === "fulfilled"
-      ).length;
-
-      setMessage(`Saved ${successCount} lead${successCount === 1 ? "" : "s"}.`);
+      setMessage(`Saved ${data.inserted} leads.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to save leads";
       setError(msg);
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleBulkGenerate() {
+    setBulkGenerating(true);
+    setError("");
+    setMessage("");
+
+    try {
+      if (selectedIds.length === 0) {
+        throw new Error("Select at least one lead first.");
+      }
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        throw new Error(userError.message);
+      }
+
+      if (!user) {
+        throw new Error("Please log in first.");
+      }
+
+      const saveRes = await fetch("/api/save-search-results", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          results,
+        }),
+      });
+
+      const saveData = await saveRes.json();
+
+      if (!saveRes.ok) {
+        throw new Error(saveData.error || "Failed to save leads before generation");
+      }
+
+      const { data: savedLeads, error: leadsError } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("user_id", user.id)
+        .in("external_id", selectedIds);
+
+      if (leadsError) {
+        throw new Error(leadsError.message);
+      }
+
+      const internalLeadIds = (savedLeads || []).map((lead) => lead.id);
+
+      const bulkRes = await fetch("/api/bulk-generate-sites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          leadIds: internalLeadIds,
+        }),
+      });
+
+      const bulkData = await bulkRes.json();
+
+      if (!bulkRes.ok) {
+        throw new Error(bulkData.error || "Bulk generation failed");
+      }
+
+      setMessage(
+        `Created ${bulkData.created?.length || 0} sites. Failed: ${bulkData.failed?.length || 0}.`
+      );
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Bulk generation failed";
+      setError(msg);
+    } finally {
+      setBulkGenerating(false);
+    }
+  }
+
+  function toggleLead(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }
+
+  function selectTopFive() {
+    setSelectedIds(topFiveIds);
   }
 
   return (
@@ -137,8 +227,9 @@ export default function LeadsPage() {
               Private lead discovery dashboard
             </h1>
             <p className="mt-4 text-lg text-zinc-400">
-              This is admin-only. Search local businesses, detect weak or missing
-              websites, score the best opportunities, and save them into your lead system.
+              Search local businesses, detect weak or missing websites, score the
+              best opportunities, save them, and generate websites at scale from
+              your admin-only dashboard.
             </p>
           </div>
 
@@ -153,9 +244,19 @@ export default function LeadsPage() {
               type="button"
               onClick={handleSaveLeads}
               disabled={saving || results.length === 0}
-              className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full border border-white/15 px-5 py-3 text-sm text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Leads"}
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkGenerate}
+              disabled={bulkGenerating || results.length === 0 || selectedIds.length === 0}
+              className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {bulkGenerating
+                ? "Generating..."
+                : `Generate Sites (${selectedIds.length})`}
             </button>
           </div>
         </div>
@@ -194,6 +295,32 @@ export default function LeadsPage() {
           </button>
         </form>
 
+        {results.length > 0 ? (
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={selectTopFive}
+              className="rounded-full border border-white/15 px-4 py-2 text-xs text-white"
+            >
+              Select Top 5
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(results.map((lead) => lead.id))}
+              className="rounded-full border border-white/15 px-4 py-2 text-xs text-white"
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="rounded-full border border-white/15 px-4 py-2 text-xs text-white"
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
+
         {error ? (
           <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}
@@ -211,6 +338,7 @@ export default function LeadsPage() {
             <table className="min-w-full border-collapse text-left text-sm">
               <thead className="border-b border-white/10 bg-black/30 text-zinc-400">
                 <tr>
+                  <th className="px-4 py-4 font-medium">Select</th>
                   <th className="px-4 py-4 font-medium">Business</th>
                   <th className="px-4 py-4 font-medium">Category</th>
                   <th className="px-4 py-4 font-medium">Phone</th>
@@ -225,7 +353,7 @@ export default function LeadsPage() {
                 {results.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="px-4 py-10 text-center text-zinc-500"
                     >
                       No leads yet. Search by city and category to begin.
@@ -237,6 +365,13 @@ export default function LeadsPage() {
                       key={lead.id}
                       className="border-b border-white/5 last:border-b-0"
                     >
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(lead.id)}
+                          onChange={() => toggleLead(lead.id)}
+                        />
+                      </td>
                       <td className="px-4 py-4">
                         <div className="font-medium text-white">
                           {lead.business_name}
