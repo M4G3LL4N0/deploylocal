@@ -1,0 +1,133 @@
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-7xl px-6 py-24">
+        {/* Hero Section */}
+        <div className="flex flex-col gap-16 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-2xl">
+            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-2">
+              DeployLocal
+            </div>
+            <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
+              The dual-engine platform for local business growth.
+            </h1>
+            <p className="mt-6 text-lg text-zinc-400">
+              <span className="font-semibold text-white">DeployLocal</span> combines two powerful products:
+              <br />
+              <span className="font-semibold text-white">1. Admin Lead Engine</span> — A private dashboard for owners to find, score, and manage local business leads.
+              <br />
+              <span className="font-semibold text-white">2. AI Website Builder</span> — A public-facing tool that instantly generates high-converting websites for any business.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/builder"
+                className="rounded-full bg-white px-6 py-3 text-sm font-medium text-black"
+              >
+                Build Your Website
+              </Link>
+              <Link
+                href="/app"
+                className="rounded-full border border-white/20 px-6 py-3 text-sm text-white"
+              >
+                Admin Dashboard
+              </Link>
+            </div>
+          </div>
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Platform Capabilities</div>
+            <div className="mt-6 flex flex-col gap-4 text-sm text-zinc-300">
+              <div>• Private admin lead scoring & management</div>
+              <div>• Public AI website generation</div>
+              <div>• One-click site deployment</div>
+              <div>• Seamless client onboarding</div>
+              <div>• Integrated outreach & sales tools</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Sections */}
+        <div className="mt-24 grid gap-6 md:grid-cols-2">
+          {/* Admin Lead Engine */}
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Admin Lead Engine</div>
+            <div className="mt-2 text-xl font-semibold">
+              Private Dashboard for Owners
+            </div>
+            <p className="mt-2 text-sm text-zinc-400">
+              Search any city and category to discover local businesses. Our scoring algorithm identifies high-potential leads, detects missing or weak websites, and ranks opportunities for maximum conversion.
+            </p>
+            <div className="mt-4 text-sm text-zinc-300">
+              <strong>Key features:</strong>
+              <ul className="mt-2 list-disc pl-5 space-y-1">
+                <li>City & category-based business search</li>
+                <li>Automated lead scoring & ranking</li>
+                <li>Website quality detection</li>
+                <li>Outreach & sales pipeline management</li>
+                <li>Client onboarding & portal access</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* AI Website Builder */}
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">AI Website Builder</div>
+            <div className="mt-2 text-xl font-semibold">
+              Public Tool for Businesses
+            </div>
+            <p className="mt-2 text-sm text-zinc-400">
+              Any business can instantly generate a professional, high-converting website. With one click, create a live site that&apos;s ready to show, customize, and launch—no technical skills required.
+            </p>
+            <div className="mt-4 text-sm text-zinc-300">
+              <strong>Key features:</strong>
+              <ul className="mt-2 list-disc pl-5 space-y-1">
+                <li>Instant AI-powered site generation</li>
+                <li>Live preview before publishing</li>
+                <li>Mobile-optimized designs</li>
+                <li>SEO-ready structure</li>
+                <li>Easy customization & upgrades</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* How It Works Together */}
+        <div className="mt-24 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold">
+              Two products. One unified platform.
+            </h2>
+            <p className="mt-4 max-w-2xl mx-auto text-zinc-400">
+              The Admin Lead Engine identifies and scores potential clients. The AI Website Builder creates their new site. Together, they form a complete system for acquiring, converting, and serving local business clients.
+            </p>
+          </div>
+        </div>
+
+        {/* Final CTA */}
+        <div className="mt-24 flex flex-col items-center text-center">
+          <h2 className="text-3xl font-semibold">
+            Ready to transform local business growth?
+          </h2>
+          <p className="mt-4 max-w-xl text-zinc-400">
+            Whether you&apos;re building your own website or managing a portfolio of clients, DeployLocal provides the tools to succeed.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4 justify-center">
+            <Link
+              href="/builder"
+              className="rounded-full bg-white px-8 py-4 text-sm font-medium text-black"
+            >
+              Build Your Website
+            </Link>
+            <Link
+              href="/app"
+              className="rounded-full border border-white/20 px-8 py-4 text-sm text-white"
+            >
+              Admin Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
