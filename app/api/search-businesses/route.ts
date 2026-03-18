@@ -20,24 +20,22 @@ type LeadResult = {
   score: number;
 };
 
-type GooglePlace = {
-  place_id?: string;
-  name?: string;
-  formatted_address?: string;
+type PlacesSearchTextPlace = {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
   rating?: number;
-  user_ratings_total?: number;
+  userRatingCount?: number;
   types?: string[];
 };
 
-type GoogleTextSearchResponse = {
-  results?: GooglePlace[];
+type PlacesSearchTextResponse = {
+  places?: PlacesSearchTextPlace[];
 };
 
-type GooglePlaceDetailsResponse = {
-  result?: {
-    formatted_phone_number?: string;
-    website?: string;
-  };
+type PlaceDetailsResponse = {
+  nationalPhoneNumber?: string;
+  websiteUri?: string;
 };
 
 function scoreLead(input: {
@@ -113,28 +111,27 @@ async function fetchPlaceDetails(
   placeId: string,
   apiKey: string
 ): Promise<{ phone: string; website: string | null }> {
-  const detailsUrl = new URL(
-    "https://maps.googleapis.com/maps/api/place/details/json"
+  const res = await fetch(
+    `https://places.googleapis.com/v1/places/${placeId}`,
+    {
+      method: "GET",
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "nationalPhoneNumber,websiteUri",
+      },
+      cache: "no-store",
+    }
   );
-  detailsUrl.searchParams.set("place_id", placeId);
-  detailsUrl.searchParams.set("fields", "formatted_phone_number,website");
-  detailsUrl.searchParams.set("key", apiKey);
 
-  const detailsResponse = await fetch(detailsUrl.toString(), {
-    method: "GET",
-    cache: "no-store",
-  });
-
-  if (!detailsResponse.ok) {
+  if (!res.ok) {
     return { phone: "", website: null };
   }
 
-  const detailsData =
-    (await detailsResponse.json()) as GooglePlaceDetailsResponse;
+  const data = (await res.json()) as PlaceDetailsResponse;
 
   return {
-    phone: detailsData.result?.formatted_phone_number ?? "",
-    website: detailsData.result?.website ?? null,
+    phone: data.nationalPhoneNumber ?? "",
+    website: data.websiteUri ?? null,
   };
 }
 
@@ -165,40 +162,45 @@ export async function POST(req: Request) {
       );
     }
 
-    const textSearchUrl = new URL(
-      "https://maps.googleapis.com/maps/api/place/textsearch/json"
+    const query = `${category} in ${city}`;
+
+    const searchRes = await fetch(
+      "https://places.googleapis.com/v1/places:searchText",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask":
+            "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.types",
+        },
+        body: JSON.stringify({
+          textQuery: query,
+          pageSize: 20,
+        }),
+        cache: "no-store",
+      }
     );
-    textSearchUrl.searchParams.set("query", `${category} in ${city}`);
-    textSearchUrl.searchParams.set("radius", String(radiusInMeters));
-    textSearchUrl.searchParams.set("key", apiKey);
 
-    const textSearchResponse = await fetch(textSearchUrl.toString(), {
-      method: "GET",
-      cache: "no-store",
-    });
-
-    if (!textSearchResponse.ok) {
-      const errorText = await textSearchResponse.text();
+    if (!searchRes.ok) {
+      const errorText = await searchRes.text();
       return NextResponse.json(
-        { error: `Google Places request failed: ${errorText}` },
+        { error: `Google Places search failed: ${errorText}` },
         { status: 502 }
       );
     }
 
-    const textSearchData =
-      (await textSearchResponse.json()) as GoogleTextSearchResponse;
+    const searchData = (await searchRes.json()) as PlacesSearchTextResponse;
+    const places = searchData.places ?? [];
 
-    const rawPlaces = textSearchData.results ?? [];
-    const limitedPlaces = rawPlaces.slice(0, 20);
-
-    const enrichedResults = await Promise.all(
-      limitedPlaces.map(async (place, index): Promise<LeadResult> => {
-        const placeId = place.place_id ?? `generated_${index}`;
-        const details = place.place_id
-          ? await fetchPlaceDetails(place.place_id, apiKey)
+    const results: LeadResult[] = await Promise.all(
+      places.map(async (place, index): Promise<LeadResult> => {
+        const placeId = place.id ?? `generated_${index}`;
+        const details = place.id
+          ? await fetchPlaceDetails(place.id, apiKey)
           : { phone: "", website: null };
 
-        const businessName = place.name ?? `${category} in ${city}`;
+        const businessName = place.displayName?.text ?? `${category} in ${city}`;
         const derivedCategory =
           place.types?.[0]?.replaceAll("_", " ") ?? category;
         const hasWebsite = Boolean(details.website);
@@ -208,21 +210,21 @@ export async function POST(req: Request) {
           business_name: businessName,
           category: derivedCategory,
           phone: details.phone,
-          address: place.formatted_address ?? "",
+          address: place.formattedAddress ?? "",
           city,
           website_url: details.website,
           has_website: hasWebsite,
           rating: typeof place.rating === "number" ? place.rating : null,
           review_count:
-            typeof place.user_ratings_total === "number"
-              ? place.user_ratings_total
+            typeof place.userRatingCount === "number"
+              ? place.userRatingCount
               : null,
           score: scoreLead({
             hasWebsite,
             rating: typeof place.rating === "number" ? place.rating : null,
             reviewCount:
-              typeof place.user_ratings_total === "number"
-                ? place.user_ratings_total
+              typeof place.userRatingCount === "number"
+                ? place.userRatingCount
                 : null,
             category: derivedCategory,
             businessName,
@@ -231,7 +233,7 @@ export async function POST(req: Request) {
       })
     );
 
-    const results = enrichedResults.sort((a, b) => b.score - a.score);
+    results.sort((a, b) => b.score - a.score);
 
     return NextResponse.json({
       city,
