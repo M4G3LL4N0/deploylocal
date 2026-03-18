@@ -156,8 +156,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY ?? "";
+
+    if (apiKey.length === 0) {
       return NextResponse.json(
         { error: "Missing GOOGLE_MAPS_API_KEY" },
         { status: 500 }
