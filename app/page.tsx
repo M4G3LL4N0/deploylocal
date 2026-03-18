@@ -1,143 +1,101 @@
-"use client";
-
-import { useState } from "react";
-import SitePreview from "../components/site-preview";
+import Link from "next/link";
 
 export default function Home() {
-  const [businessName, setBusinessName] = useState("");
-  const [city, setCity] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [generatedSite, setGeneratedSite] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch("/api/generate-site", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ businessName, city, businessType }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate site");
-      }
-
-      const data = await response.json();
-      setGeneratedSite(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="p-6 border-b border-gray-800">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold tracking-tight">DeployLocal.app</h1>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="grid gap-12 lg:grid-cols-2">
-          <div className="flex flex-col justify-center">
-            <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-              We build local business websites{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                before you even ask
-              </span>
-            </h2>
-            <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-              Our platform scans for businesses with weak or no online presence and
-              instantly generates a premium, conversion-optimized website. No
-              waiting, no hassle—just a professional site that brings in customers.
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-7xl px-6 py-24">
+        <div className="flex flex-col items-start justify-between gap-10 md:flex-row md:items-center">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
+              DeployLocal
+            </div>
+            <h1 className="mt-4 text-5xl font-semibold tracking-tight md:text-6xl">
+              We already built your website.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg text-zinc-400">
+              DeployLocal finds local businesses without websites, builds one instantly,
+              and helps you turn it into revenue. Generate sites, capture leads, and scale outreach —
+              all in one system.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="businessName" className="block text-sm font-medium mb-2">
-                  Business Name
-                </label>
-                <input
-                  type="text"
-                  id="businessName"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  required
-                  className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. Joe's Pizza"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium mb-2">
-                  City
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  required
-                  className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. San Francisco"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="businessType" className="block text-sm font-medium mb-2">
-                  Business Type
-                </label>
-                <input
-                  type="text"
-                  id="businessType"
-                  value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value)}
-                  required
-                  className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. Restaurant, Salon, Auto Repair"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 px-6 bg-white text-black font-bold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/app"
+                className="rounded-full bg-white px-6 py-3 text-sm font-medium text-black"
               >
-                {loading ? "Generating..." : "Generate Site"}
-              </button>
-            </form>
+                Enter App
+              </Link>
 
-            {error && (
-              <p className="mt-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-200">
-                {error}
-              </p>
-            )}
+              <Link
+                href="/app/leads"
+                className="rounded-full border border-white/20 px-6 py-3 text-sm text-white"
+              >
+                Find Leads
+              </Link>
+            </div>
           </div>
 
-          <div className="lg:pl-12">
-            {generatedSite ? (
-              <div className="sticky top-6">
-                <SitePreview data={generatedSite} />
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-800 rounded-xl p-12">
-                <p className="text-gray-500 text-center">
-                  Your generated website preview will appear here
-                </p>
-              </div>
-            )}
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">What this does</div>
+
+            <div className="mt-6 flex flex-col gap-4 text-sm text-zinc-300">
+              <div>• Scrapes local businesses</div>
+              <div>• Detects missing / weak websites</div>
+              <div>• Scores best opportunities</div>
+              <div>• Generates websites instantly</div>
+              <div>• Lets you sell before building anything</div>
+            </div>
           </div>
         </div>
-      </main>
-    </div>
+
+        <div className="mt-24 grid gap-6 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Step 1</div>
+            <div className="mt-2 text-xl font-semibold">
+              Find high-value businesses
+            </div>
+            <p className="mt-2 text-sm text-zinc-400">
+              Search any city + category and get ranked leads instantly.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Step 2</div>
+            <div className="mt-2 text-xl font-semibold">
+              Generate their website
+            </div>
+            <p className="mt-2 text-sm text-zinc-400">
+              One click creates a live, high-converting site you can show them.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Step 3</div>
+            <div className="mt-2 text-xl font-semibold">
+              Close & monetize
+            </div>
+            <p className="mt-2 text-sm text-zinc-400">
+              Call, text, or email — and convert them into recurring revenue.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-24 flex flex-col items-center text-center">
+          <h2 className="text-3xl font-semibold">
+            This is not a website builder.
+          </h2>
+          <p className="mt-4 max-w-xl text-zinc-400">
+            This is a distribution engine for local businesses.
+          </p>
+
+          <Link
+            href="/app"
+            className="mt-8 rounded-full bg-white px-8 py-4 text-sm font-medium text-black"
+          >
+            Launch Dashboard
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }
