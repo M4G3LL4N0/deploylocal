@@ -1,8 +1,86 @@
-import { NextResponse }import { NextRespr"i
+import { NextResponse } from "next/server";
 
-ttttttttttttttttttttttttttttttttt?:tttttttttttttttttttttttttint;
-                                   ul            s                                   at                    ne   tring;  hasWebsite: boolean;
-  r:   rating: number | nu:   r:   rating: number |bs  r:   rating: number | nu: er  r:   rating: numco  r:   rating: number sc  r:   r:   rating: e G  r:   rating: number | nu:   r:   r  n  r:   rating: number | nu:   r:   rating: number |bs  r:   rating: number | nu: er  r:   rating: numco  r:   rating: wo  r:   rating: number | nu:   r:   rating: n  "cont  r:   rating: number | nu:   r:   rating: number |bs  r:   rating: number | nu: er  r:   rating: numco  r:   rating: number sc  "l  r:   rating: number | nu:   r:   rating: numbviceKeywords.some((keyword) =>
+type SearchRequestBody = {
+  city?: string;
+  category?: string;
+  radius?: number;
+};
+
+type LeadResult = {
+  id: string;
+  business_name: string;
+  category: string;
+  phone: string;
+  address: string;
+  city: string;
+  website_url: string | null;
+  has_website: boolean;
+  rating: number | null;
+  review_count: number | null;
+  score: number;
+};
+
+type GooglePlace = {
+  place_id?: string;
+  name?: string;
+  formatted_address?: string;
+  rating?: number;
+  user_ratings_total?: number;
+  types?: string[];
+};
+
+type GoogleTextSearchResponse = {
+  results?: GooglePlace[];
+};
+
+type GooglePlaceDetailsResponse = {
+  result?: {
+    formatted_phone_number?: string;
+    website?: string;
+  };
+};
+
+function scoreLead(input: {
+  hasWebsite: boolean;
+  rating: number | null;
+  reviewCount: number | null;
+  category: string;
+  businessName: string;
+}): number {
+  let score = 0;
+
+  if (!input.hasWebsite) score += 35;
+
+  if (input.rating !== null) {
+    if (input.rating >= 4.5) score += 15;
+    else if (input.rating >= 4.0) score += 10;
+    else if (input.rating >= 3.5) score += 5;
+  }
+
+  if (input.reviewCount !== null) {
+    if (input.reviewCount < 10) score += 20;
+    else if (input.reviewCount < 30) score += 12;
+    else if (input.reviewCount < 75) score += 6;
+  }
+
+  const serviceKeywords = [
+    "plumber",
+    "electrician",
+    "contractor",
+    "roofer",
+    "hvac",
+    "salon",
+    "barber",
+    "dentist",
+    "cleaner",
+    "landscaper",
+    "painter",
+    "locksmith",
+    "mechanic",
+  ];
+
+  if (
+    serviceKeywords.some((keyword) =>
       input.category.toLowerCase().includes(keyword)
     )
   ) {
