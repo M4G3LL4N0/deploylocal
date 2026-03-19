@@ -14,6 +14,171 @@ function slugify(input: string) {
     .slice(0, 40);
 }
 
+// Template configurations
+const templates = {
+  plumber: {
+    layout: "vertical",
+    sections: ["hero", "services", "emergency", "contact", "locations"],
+    prompt: `
+You are generating a high-converting plumbing service website.
+
+Focus on:
+- Emergency plumbing services
+- Common plumbing services offered
+- Local service area
+- Professional and reliable service
+- Contact information and availability
+
+Return STRICT JSON ONLY.
+
+Business:
+Name: {businessName}
+Category: {category}
+City: {city}
+
+Output format:
+{
+  "headline": "",
+  "subheadline": "",
+  "services": [],
+  "emergency": "",
+  "about": "",
+  "cta": "",
+  "faq": [{ "question": "", "answer": "" }]
+}
+`,
+    defaultServices: [
+      "Emergency Plumbing Services",
+      "Leak Repair & Detection",
+      "Pipe Installation & Repair",
+      "Drain Cleaning",
+      "Water Heater Services",
+      "Bathroom & Kitchen Plumbing"
+    ]
+  },
+  dentist: {
+    layout: "horizontal",
+    sections: ["hero", "services", "about", "testimonials", "contact"],
+    prompt: `
+You are generating a high-converting dental practice website.
+
+Focus on:
+- Comprehensive dental services
+- Patient comfort and care
+- Modern dental technology
+- Experienced dental team
+- Insurance and payment options
+
+Return STRICT JSON ONLY.
+
+Business:
+Name: {businessName}
+Category: {category}
+City: {city}
+
+Output format:
+{
+  "headline": "",
+  "subheadline": "",
+  "services": [],
+  "about": "",
+  "testimonials": [],
+  "cta": "",
+  "faq": [{ "question": "", "answer": "" }]
+}
+`,
+    defaultServices: [
+      "General Dentistry",
+      "Cosmetic Dentistry",
+      "Teeth Whitening",
+      "Dental Implants",
+      "Orthodontics",
+      "Pediatric Dentistry"
+    ]
+  },
+  restaurant: {
+    layout: "full-width",
+    sections: ["hero", "menu", "hours", "location", "about"],
+    prompt: `
+You are generating a high-converting restaurant website.
+
+Focus on:
+- Menu highlights and specialties
+- Dining atmosphere and experience
+- Operating hours and location
+- Reservations and contact info
+- Special events and promotions
+
+Return STRICT JSON ONLY.
+
+Business:
+Name: {businessName}
+Category: {category}
+City: {city}
+
+Output format:
+{
+  "headline": "",
+  "subheadline": "",
+  "menu_highlights": [],
+  "about": "",
+  "hours": "",
+  "location": "",
+  "cta": "",
+  "faq": [{ "question": "", "answer": "" }]
+}
+`,
+    defaultServices: [
+      "Fine Dining Experience",
+      "Local Cuisine Specialties",
+      "Wine & Beverage Selection",
+      "Private Dining Events",
+      "Catering Services",
+      "Takeout & Delivery"
+    ]
+  },
+  barber: {
+    layout: "side-panel",
+    sections: ["hero", "services", "team", "booking", "contact"],
+    prompt: `
+You are generating a high-converting barber shop website.
+
+Focus on:
+- Professional barber services
+- Experienced barbers/stylists
+- Modern shop atmosphere
+- Booking and appointment system
+- Men's grooming products
+
+Return STRICT JSON ONLY.
+
+Business:
+Name: {businessName}
+Category: {category}
+City: {city}
+
+Output format:
+{
+  "headline": "",
+  "subheadline": "",
+  "services": [],
+  "team": [],
+  "about": "",
+  "cta": "",
+  "faq": [{ "question": "", "answer": "" }]
+}
+`,
+    defaultServices: [
+      "Men's Haircuts & Styling",
+      "Beard Grooming & Trimming",
+      "Hot Towel Shaves",
+      "Facial Treatments",
+      "Hair Coloring",
+      "Special Occasion Styling"
+    ]
+  }
+};
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as GenerateBody;
@@ -36,26 +201,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const prompt = `
-You are generating a high-converting local business website.
+    // Get template based on category
+    const categoryLower = category.toLowerCase();
+    const template = templates[categoryLower] || templates.plumber;
 
-Return STRICT JSON ONLY.
-
-Business:
-Name: ${businessName}
-Category: ${category}
-City: ${city}
-
-Output format:
-{
-  "headline": "",
-  "subheadline": "",
-  "services": [],
-  "about": "",
-  "cta": "",
-  "faq": [{ "question": "", "answer": "" }]
-}
-`;
+    // Prepare prompt with template-specific instructions
+    const prompt = template.prompt
+      .replace("{businessName}", businessName)
+      .replace("{category}", category)
+      .replace("{city}", city);
 
     const aiRes = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -87,11 +241,21 @@ Output format:
       );
     }
 
+    // Ensure required fields exist and use defaults if missing
+    if (!siteJson.services && template.defaultServices) {
+      siteJson.services = template.defaultServices;
+    }
+
     const subdomain = slugify(businessName);
 
     return NextResponse.json({
       site: siteJson,
       subdomain,
+      template: {
+        type: categoryLower,
+        layout: template.layout,
+        sections: template.sections
+      }
     });
   } catch (err) {
     return NextResponse.json(

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { site, subdomain } = genData;
+    const { site, subdomain, template } = genData;
 
     const { data, error } = await supabase
       .from("generated_sites")
@@ -53,6 +53,7 @@ export async function POST(req: Request) {
         status: "preview",
         preview_token: createPreviewToken(),
         lead_id: leadId || null,
+        template: template, // Add template information
       })
       .select()
       .single();
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
       success: true,
       site: data,
       previewUrl: `${appUrl}/sites/${data.subdomain}?token=${data.preview_token}`,
+      template: template
     });
   } catch (error) {
     const message =

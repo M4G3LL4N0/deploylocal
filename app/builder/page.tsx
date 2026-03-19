@@ -9,6 +9,11 @@ type GeneratedSite = {
   about: string;
   cta: string;
   faq: { question: string; answer: string }[];
+  template: {
+    type: string;
+    layout: string;
+    sections: string[];
+  };
 };
 
 export default function BuilderPage() {
@@ -52,6 +57,14 @@ export default function BuilderPage() {
     }
   }
 
+  // Template descriptions for the UI
+  const templateDescriptions = {
+    plumber: "Emergency plumbing services with professional expertise",
+    dentist: "Comprehensive dental care with modern technology",
+    restaurant: "Fine dining experience with exceptional cuisine",
+    barber: "Professional barber services with modern style"
+  };
+
   return (
     <main className="min-h-screen bg-black px-6 py-20 text-white">
       <div className="mx-auto max-w-6xl">
@@ -64,7 +77,7 @@ export default function BuilderPage() {
           </h1>
           <p className="mt-4 text-lg text-zinc-400">
             Enter your business details and DeployLocal will create a fast website
-            preview under our platform workflow.
+            preview with industry-specific templates.
           </p>
         </div>
 
@@ -83,7 +96,7 @@ export default function BuilderPage() {
               />
               <input
                 className="w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none"
-                placeholder="Category"
+                placeholder="Category (plumber, dentist, restaurant, barber)"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 required
@@ -110,6 +123,16 @@ export default function BuilderPage() {
                 {error}
               </div>
             ) : null}
+
+            {site && (
+              <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <div className="text-sm text-blue-300">
+                  Selected template: <span className="font-medium">{site.template.type}</span>
+                  <br />
+                  <span className="text-xs">{templateDescriptions[site.template.type as keyof typeof templateDescriptions]}</span>
+                </div>
+              </div>
+            )}
           </form>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -155,20 +178,14 @@ export default function BuilderPage() {
 
                 <section>
                   <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                    FAQ
+                    Template Information
                   </div>
-                  <div className="mt-4 space-y-3">
-                    {site.faq.map((item) => (
-                      <div
-                        key={item.question}
-                        className="rounded-2xl border border-white/10 bg-black/30 p-4"
-                      >
-                        <div className="font-medium">{item.question}</div>
-                        <div className="mt-2 text-sm text-zinc-400">
-                          {item.answer}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="mt-4 p-4 bg-white/5 rounded-xl">
+                    <div className="text-sm">
+                      <div className="font-medium">Type: {site.template.type}</div>
+                      <div className="text-zinc-400">Layout: {site.template.layout}</div>
+                      <div className="text-zinc-400">Sections: {site.template.sections.join(", ")}</div>
+                    </div>
                   </div>
                 </section>
               </div>

@@ -44,6 +44,12 @@ type SiteInput = {
   leadId: string;
 };
 
+type Template = {
+  type: string;
+  layout: string;
+  sections: string[];
+};
+
 type SiteResponse = {
   site: {
     id: string;
@@ -55,6 +61,7 @@ type SiteResponse = {
     status: "preview" | "active";
     preview_token: string | null;
     client_user_id: string | null;
+    template: Template;
   };
 };
 
