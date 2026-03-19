@@ -22,6 +22,9 @@ type LeadRecord = {
   outreach_status: string | null;
   generated_site_id: string | null;
   website_quality_score: number | null;
+  call_attempts: number;
+  last_called_at: string | null;
+  notes: string;
 };
 
 const statuses = ["new", "queued", "contacted", "interested", "closed", "dead"];
@@ -43,6 +46,8 @@ export default function LeadDetailPage() {
     sms: string;
     email: { subject: string; body: string };
   } | null>(null);
+  const [callLog, setCallLog] = useState<Array<{ outcome: string; timestamp: string }>>([]);
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     async function loadLead() {
@@ -71,8 +76,13 @@ export default function LeadDetailPage() {
         .from("leads")
         .update({
           outreach_status: nextStatus,
+          call_attempts: lead.call_attempts + 1,
+          last_called_at: new Date().toISOString(),
+          notes: notes,
         })
         .eq("id", leadId)
+        .eq("user_id", lead?.client_user_id ?? "")
+        .select("*")
         .single();
 
       setLead(updatedLead);
@@ -99,8 +109,7 @@ export default function LeadDetailPage() {
         leadId: lead.id,
       });
 
-      const { data: refreshedLead } = await supabase
-        .from("leads")
+      const { data: refreshedLead } = await supabase        .from("leads")
         .select("*")
         .eq("id", leadId)
         .single();
@@ -132,6 +141,10 @@ export default function LeadDetailPage() {
       setPitchGenerating(false);
     }
   }
+
+  const handleLogCall = () => {
+    setCallLog([...callLog, { outcome: "no answer", timestamp: new Date().toISOString() }]);
+  };
 
   if (loading) {
     return (
@@ -200,6 +213,48 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
+        {/* Call Tracking Section */}
+        <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="text-sm text-zinc-400">Call Tracking</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <div>Attempts: <strong>{lead.call_attempts}</strong></div>
+            <div>Last Called: <strong>{lead.last_called_at ? new Date(lead.last_called_at).toLocaleString() : "—"}</strong></div>
+          </div>
+          <div className="mt-2 text-sm text-zinc-400">Notes</div>
+          <textarea
+            className="mt-1 rounded-2xl border border-white/10 bg-black px-4 py-2 text-white w-full"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add notes about the call"
+          />
+          {lead.notes && (
+            <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs">
+              {lead.notes}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleLogCall}
+            className="mt-3 rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={callLog.length >= 5}
+          >
+            {callLog.length < 5 ? "Log Call" : "Log Limit Reached"}
+          </button>
+        </div>
+
+        {callLog.length > 0 && (
+          <div className="mt-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-zinc-400">Recent Call Log</div>
+            {callLog.map((entry, idx) => (
+              <div key={idx} className="border-t border-white/5 pt-2 mt-2">
+                <span className="text-sm text-zinc-300">
+                  {entry.outcome} at {new Date(entry.timestamp).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Score</div>
@@ -244,8 +299,7 @@ export default function LeadDetailPage() {
         {outreachMessages && (
           <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Generated Outreach Messages</div>
-            
-            <div className="mt-6 space-y-6">
+                        <div className="mt-6 space-y-6">
               <div className="border border-white/5 rounded-xl p-4">
                 <h3 className="text-lg font-semibold mb-3">Cold Call Script</h3>
                 <p className="text-zinc-300 whitespace-pre-line">{outreachMessages.callScript}</p>

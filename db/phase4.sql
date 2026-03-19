@@ -21,8 +21,7 @@ using (
   exists (
     select 1
     from public.generated_sites gs
-    where gs.id = generated_site_id
-      and gs.owner_user_id = auth.uid()
+    where gs.id = generated_site_id      and gs.owner_user_id = auth.uid()
   )
 );
 
@@ -41,8 +40,7 @@ with check (
 
 drop policy if exists "client_site_invites_owner_update" on public.client_site_invites;
 create policy "client_site_invites_owner_update"
-on public.client_site_invites
-for update
+on public.client_site_invitesfor update
 using (
   exists (
     select 1
@@ -51,3 +49,9 @@ using (
       and gs.owner_user_id = auth.uid()
   )
 );
+
+-- Add call tracking columns to leads table
+ALTER TABLE leads
+  ADD COLUMN IF NOT EXISTS call_attempts INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_called_at TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS notes TEXT;
