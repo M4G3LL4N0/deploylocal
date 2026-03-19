@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Card from "@/components/ui/Card";
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -35,47 +38,45 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-24 text-white">
-      <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/5 p-8">
-        <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-          Sign up
+    <main className="min-h-screen bg-black flex items-center justify-center px-6 py-24">
+      <Card className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-white mb-2">Create your account</h1>
+          <p className="text-zinc-400">Sign up to get started</p>
         </div>
-        <h1 className="mt-4 text-4xl font-semibold">Create your account</h1>
-
-        <form onSubmit={handleSignup} className="mt-8 space-y-4">
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none"
+        <form onSubmit={handleSignup} className="space-y-4">
+          <Input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setEmail(e.target.value)
-            }
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none"
+          <Input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setPassword(e.target.value)
-            }
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-white px-6 py-3 text-sm font-medium text-black"
+            className="w-full"
           >
             {loading ? "Creating account..." : "Create account"}
-          </button>
+          </Button>
+          {message && (
+            <p className="mt-2 text-sm text-zinc-400">{message}</p>
+          )}
         </form>
-
-        {message ? (
-          <p className="mt-4 text-sm text-zinc-400">{message}</p>
-        ) : null}
-      </div>
+        <p className="mt-4 text-xs text-zinc-500 text-center">
+          Already have an account?{" "}
+          <a href="/login" className="font-medium hover:text-white">
+            Log in
+          </a>
+        </p>
+      </Card>
     </main>
   );
 }
