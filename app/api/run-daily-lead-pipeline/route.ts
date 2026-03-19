@@ -1,23 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-
-// Simple scoring function - can be replaced with more sophisticated logic
-function calculateScore(lead: any): number {
-  let score = 0;
-  // Rating is typically 0-5, scale to 0-100
-  if (lead.rating) {
-    score += lead.rating * 20;
-  }
-  // Prioritize businesses without a website
-  if (!lead.has_website) {
-    score += 30;
-  }
-  // Prioritize businesses with a phone number
-  if (lead.phone) {
-    score += 20;
-  }
-  return score;
-}
+import { scoreLead } from '@/lib/scoring/leadScore';
 
 /**
  * This endpoint is intended to be called by a daily cron job (e.g., Vercel Cron).
@@ -47,6 +30,7 @@ export async function POST(req: Request) {
     const targetCategories = process.env.TARGET_CATEGORIES?.split(',').map(s => s.trim()).filter(Boolean) || [];
     const maxLeads = parseInt(process.env.MAX_LEADS_PER_RUN || '1000', 10);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const maxQueueLeads = parseInt(process.env.MAX_QUEUE_LEADS || '10', 10); // Default to top 10 leads
 
     if (targetCities.length === 0 || targetCategories.length === 0) {
       return NextResponse.json({ error: 'Missing TARGET_CITIES or TARGET_CATEGORIES environment variables' }, { status: 400 });
@@ -94,44 +78,38 @@ export async function POST(req: Request) {
     }
     const uniqueLeads = Array.from(leadMap.values());
 
-    // Score each lead
+    // Score each lead using the proper scoring function
     const scoredLeads = uniqueLeads.map(lead => ({
       ...lead,
-      score: calculateScore(lead)
+      score: scoreLead(lead)
     }));
 
     // Sort by score descending
     scoredLeads.sort((a, b) => b.score - a.score);
 
-    // Take top N
-    const topLeads = scoredLeads.slice(0, maxLeads);
+    // Take top N for queueing (default to top 10)
+    const topLeads = scoredLeads.slice(0, maxQueueLeads);
 
-    // Upsert into leads table
-    let insertedCount = 0;
+    // Queue these leads for site generation
+    const queueEntries: any[] = [];
     for (const lead of topLeads) {
-      const { id: placeId, business_name, category, phone, address, city, website_url, has_website, rating } = lead;
-      const { error } = await supabaseAdmin
-        .from('leads')
-        .upsert(
-          {
-            place_id: placeId,
-            business_name,
-            category,
-            phone,
-            address,
-            city,
-            website_url,
-            has_website,
-            rating
-          },
-          { onConflict: 'place_id' }
-        );
+      queueEntries.push({
+        lead_id: lead.id,
+        status: 'queued',
+        created_at: new Date().toISOString(),
+      });
+    }
 
-      if (error) {
-        console.error(`Failed to upsert lead ${placeId}:`, error);
-      } else {
-        insertedCount++;
-      }
+    // Insert into queue table
+    const { error: queueError } = await supabaseAdmin
+      .from('lead_queue')
+      .insert(queueEntries)
+      .on_conflict('lead_id')
+      .ignore();
+
+    if (queueError) {
+      console.error('Failed to queue leads:', queueError);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -139,7 +117,7 @@ export async function POST(req: Request) {
       totalFound: allLeads.length,
       uniqueLeads: uniqueLeads.length,
       topLeads: topLeads.length,
-      insertedOrUpdated: insertedCount
+      queued: queueEntries.length
     });
   } catch (error) {
     console.error('Pipeline error:', error);

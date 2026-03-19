@@ -9,3 +9,20 @@ create index if not exists leads_user_id_score_idx
 
 create index if not exists generated_sites_owner_user_id_idx
   on public.generated_sites (owner_user_id, created_at desc);
+
+-- Add queue table for lead generation
+CREATE TABLE IF NOT EXISTS lead_queue (
+  id SERIAL PRIMARY KEY,
+  lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'queued',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  processed_at TIMESTAMPTZ,
+  site_id UUID REFERENCES generated_sites(id),
+  error_message TEXT,
+  CONSTRAINT lead_queue_lead_id_unique UNIQUE (lead_id)
+);
+
+-- Add indexes for queue processing
+CREATE INDEX IF NOT EXISTS lead_queue_status_idx ON public.lead_queue (status);
+CREATE INDEX IF NOT EXISTS lead_queue_created_at_idx ON public.lead_queue (created_at);
