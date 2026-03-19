@@ -14,6 +14,12 @@ type LeadInput = {
   review_count: number | null;
   score: number;
   website_quality_score: number | null;
+  // New fields for enhanced lead data
+  email: string | null;
+  business_hours: string | null;
+  place_id: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 export async function POST(req: Request) {
@@ -44,6 +50,12 @@ export async function POST(req: Request) {
       review_count: lead.review_count,
       score: lead.score,
       website_quality_score: lead.website_quality_score,
+      // New fields
+      email: lead.email,
+      business_hours: lead.business_hours,
+      place_id: lead.place_id,
+      lat: lead.lat,
+      lng: lead.lng,
       status: "new",
       outreach_status: "new",
     }));

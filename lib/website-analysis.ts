@@ -1,7 +1,5 @@
 const CTA_KEYWORDS = [
-  "contact", "call", "book", "get started", "learn more", "sign up", "buy now", 
-  "shop now", "request a quote", "schedule", "free", "trial", "demo", "consultation", 
-  "estimate", "quote", "appointment", "call now", "click here", "more info", 
+  "contact", "call", "book", "get started", "learn more", "sign up", "buy now",   "shop now", "request a quote", "schedule", "free", "trial", "demo", "consultation",   "estimate", "quote", "appointment", "call now", "click here", "more info", 
   "details", "info", "contact us", "call us", "book now", "get quote", 
   "start now", "begin", "join", "subscribe", "register", "sign in", "log in", 
   "apply", "hire", "buy", "purchase", "order", "shop", "store", "visit", 
@@ -48,6 +46,46 @@ export function analyzeWebsite(html: string): number {
   }
 
   return score;
+}
+
+// Helper functions to extract additional lead data from HTML
+
+export function extractEmail(html: string): string | null {
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const matches = html.match(emailRegex);
+  return matches?.[0] ?? null;
+}
+
+export function extractBusinessHours(html: string): string | null {
+  // Simple heuristic: look for common patterns like "Mon-Fri 9am-5pm"
+  const hoursRegex = /(?:mon|tue|wed|thu|fri|sat|sun)[^\d]*?(\d{1,2})(?::?(\d{2}))?\s*-\s*(\d{1,2})(?::?(\d{2}))?/gi;
+  const matches = html.match(hoursRegex);
+  if (matches) {
+    // Return the first found range in a simple format
+    const start = matches[0];
+    return start.replace(/\s+/g, ' ').trim();
+  }
+  return null;
+}
+
+export function extractPlaceId(html: string): string | null {
+  // Look for Google Place ID patterns like "Place ID: ChIJ... " or "g/place/id/..."
+  const placeIdRegex = /(?:place[_-]?id|google[_-]?place[_-]?id|pid)=([a-zA-Z0-9-_]+)/i;
+  const match = html.match(placeIdRegex);
+  return match?.[1] ?? null;
+}
+
+export function extractCoordinates(html: string): { lat: number | null; lng: number | null } | null {
+  // Look for latitude/longitude patterns like "lat":12.34,"lng":56.78
+  const coordRegex = /["']?lat["']?\s*:\s*([-\d.]+)\s*,\s*["']?lng["']?\s*:\s*([-\d.]+)/i;
+  const match = html.match(coordRegex);
+  if (match) {
+    return {
+      lat: parseFloat(match[1]),
+      lng: parseFloat(match[2])
+    };
+  }
+  return null;
 }
 
 export async function fetchWebsiteHtml(url: string, timeout = 5000): Promise<string> {
