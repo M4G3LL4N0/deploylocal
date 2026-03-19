@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { scoreLead } from "@/lib/scoring/leadScore";
 
 type SearchRequestBody = {
   city?: string;
@@ -37,75 +38,6 @@ type PlaceDetailsResponse = {
   nationalPhoneNumber?: string;
   websiteUri?: string;
 };
-
-function scoreLead(input: {
-  hasWebsite: boolean;
-  rating: number | null;
-  reviewCount: number | null;
-  category: string;
-  businessName: string;
-}): number {
-  let score = 0;
-
-  if (!input.hasWebsite) score += 35;
-
-  if (input.rating !== null) {
-    if (input.rating >= 4.5) score += 15;
-    else if (input.rating >= 4.0) score += 10;
-    else if (input.rating >= 3.5) score += 5;
-  }
-
-  if (input.reviewCount !== null) {
-    if (input.reviewCount < 10) score += 20;
-    else if (input.reviewCount < 30) score += 12;
-    else if (input.reviewCount < 75) score += 6;
-  }
-
-  const serviceKeywords = [
-    "plumber",
-    "electrician",
-    "contractor",
-    "roofer",
-    "hvac",
-    "salon",
-    "barber",
-    "dentist",
-    "cleaner",
-    "landscaper",
-    "painter",
-    "locksmith",
-    "mechanic",
-  ];
-
-  if (
-    serviceKeywords.some((keyword) =>
-      input.category.toLowerCase().includes(keyword)
-    )
-  ) {
-    score += 10;
-  }
-
-  const chainKeywords = [
-    "mcdonald",
-    "starbucks",
-    "walmart",
-    "target",
-    "subway",
-    "burger king",
-    "domino",
-    "chipotle",
-  ];
-
-  if (
-    chainKeywords.some((keyword) =>
-      input.businessName.toLowerCase().includes(keyword)
-    )
-  ) {
-    score -= 25;
-  }
-
-  return Math.max(0, Math.min(100, score));
-}
 
 async function fetchPlaceDetails(
   placeId: string,
@@ -220,14 +152,15 @@ export async function POST(req: Request) {
               ? place.userRatingCount
               : null,
           score: scoreLead({
-            hasWebsite,
+            has_website: hasWebsite,
             rating: typeof place.rating === "number" ? place.rating : null,
-            reviewCount:
+            review_count:
               typeof place.userRatingCount === "number"
                 ? place.userRatingCount
                 : null,
+            phone: details.phone,
             category: derivedCategory,
-            businessName,
+            business_name: businessName,
           }),
         };
       })
