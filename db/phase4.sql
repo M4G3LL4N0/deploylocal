@@ -40,7 +40,8 @@ with check (
 
 drop policy if exists "client_site_invites_owner_update" on public.client_site_invites;
 create policy "client_site_invites_owner_update"
-on public.client_site_invitesfor update
+on public.client_site_invites
+for update
 using (
   exists (
     select 1
