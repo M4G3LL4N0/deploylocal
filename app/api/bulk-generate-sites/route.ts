@@ -8,6 +8,7 @@ function createPreviewToken() {
 type GenerateSiteResponse = {
   site: Record<string, unknown>;
   subdomain: string;
+  error?: string;
 };
 
 export async function POST(req: Request) {
@@ -15,7 +16,9 @@ export async function POST(req: Request) {
     const { supabase, user } = await requireAdmin();
     const body = await req.json();
 
-    const leadIds = Array.isArray(body.leadIds) ? body.leadIds.filter((id) => typeof id === "string") : [];
+    const leadIds = Array.isArray(body.leadIds)
+      ? body.leadIds.filter((id: unknown): id is string => typeof id === "string")
+      : [];
 
     if (leadIds.length === 0) {
       return NextResponse.json(
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
           }),
         });
 
-        const genData = (await genRes.json()) as GenerateSiteResponse & { error?: string };
+        const genData = (await genRes.json()) as GenerateSiteResponse;
 
         if (!genRes.ok || !genData.site || !genData.subdomain) {
           failed.push({

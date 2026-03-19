@@ -4,15 +4,27 @@ export function proxy(req: NextRequest) {
   const host = req.headers.get("host") || "";
   const url = req.nextUrl.clone();
 
-  const parts = host.split(".");
-  const subdomain = parts.length > 2 ? parts[0] : "";
+  const hostWithoutPort = host.split(":")[0];
+  const parts = hostWithoutPort.split(".");
 
-  if (
-    subdomain &&
-    subdomain !== "www" &&
-    subdomain !== "app" &&
-    subdomain !== "client"
-  ) {
+  let subdomain = "";
+
+  if (hostWithoutPort.endsWith(".localhost") && parts.length > 1) {
+    subdomain = parts[0];
+  } else if (parts.length > 2) {
+    subdomain = parts[0];
+  }
+
+  const reserved = new Set([
+    "",
+    "www",
+    "app",
+    "client",
+    "deploylocal",
+    "deploylocal-app",
+  ]);
+
+  if (!reserved.has(subdomain)) {
     url.pathname = `/sites/${subdomain}`;
     return NextResponse.rewrite(url);
   }
@@ -21,5 +33,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

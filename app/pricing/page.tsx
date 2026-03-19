@@ -2,47 +2,63 @@ import Link from "next/link";
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-2xl px-6 py-24">
-        <h1 className="text-4xl font-bold mb-6">Pricing</h1>
-        <p className="mb-8 text-zinc-400">
-          DeployLocal offers flexible pricing for both admins and clients.
-        </p>
-        <div className="grid gap-8 md:grid-cols-2">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-lg font-semibold mb-2">Admin Platform</div>
-            <div className="mb-2 text-zinc-300">Lead engine, outreach, site generator</div>
-            <div className="mb-4 text-3xl font-bold">$99/mo</div>
-            <ul className="mb-4 text-zinc-400 text-sm space-y-1">
-              <li>• Unlimited lead searches</li>
-              <li>• Unlimited site previews</li>
-              <li>• Outreach queue & CRM</li>
-              <li>• Client onboarding tools</li>
-            </ul>
-            <Link
-              href="/signup"
-              className="rounded-full bg-white px-5 py-2 text-sm font-medium text-black"
-            >
-              Start Free Trial
-            </Link>
+    <main className="min-h-screen bg-black px-6 py-20 text-white">
+      <div className="mx-auto max-w-7xl">
+        <div className="max-w-3xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
+            Pricing
           </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-lg font-semibold mb-2">Client Portal</div>
-            <div className="mb-2 text-zinc-300">Site management, upgrades, analytics</div>
-            <div className="mb-4 text-3xl font-bold">$29/mo</div>
-            <ul className="mb-4 text-zinc-400 text-sm space-y-1">
-              <li>• Manage your live site</li>
-              <li>• Upgrade features</li>
-              <li>• Access analytics</li>
-              <li>• Priority support</li>
+          <h1 className="mt-4 text-5xl font-semibold tracking-tight">
+            Simple pricing for fast website launches
+          </h1>
+          <p className="mt-4 text-lg text-zinc-300">
+            Start with a preview, review your site inside DeployLocal, and
+            activate when you are ready.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="text-sm text-zinc-400">Starter</div>
+            <div className="mt-4 text-4xl font-semibold">$49</div>
+            <div className="mt-2 text-sm text-zinc-500">one-time setup</div>
+            <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+              <li>• AI-generated site preview</li>
+              <li>• DeployLocal subdomain</li>
+              <li>• Client portal access</li>
             </ul>
-            <Link
-              href="/signup"
-              className="rounded-full bg-white px-5 py-2 text-sm font-medium text-black"
-            >
-              Get Started
-            </Link>
           </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="text-sm text-zinc-400">Growth</div>
+            <div className="mt-4 text-4xl font-semibold">$99/mo</div>
+            <div className="mt-2 text-sm text-zinc-500">managed website plan</div>
+            <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+              <li>• Live website activation</li>
+              <li>• Ongoing updates</li>
+              <li>• Hosted under DeployLocal</li>
+            </ul>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="text-sm text-zinc-400">Custom</div>
+            <div className="mt-4 text-4xl font-semibold">Contact</div>
+            <div className="mt-2 text-sm text-zinc-500">for advanced needs</div>
+            <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+              <li>• Multi-location businesses</li>
+              <li>• Custom domains</li>
+              <li>• White-glove setup</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12">
+          <Link
+            href="/builder"
+            className="rounded-full bg-white px-6 py-3 text-sm font-medium text-black"
+          >
+            Start Building
+          </Link>
         </div>
       </div>
     </main>
