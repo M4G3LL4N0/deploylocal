@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 type GeneratedSite = {
   id: string;
@@ -13,11 +14,12 @@ type GeneratedSite = {
   site_type: "admin_generated" | "self_serve";
   status: "preview" | "active";
   preview_token: string | null;
-  created_at: string;
+  client_user_id: string | null;
 };
 
 export default function AdminSitesPage() {
   const supabase = createClient();
+  const router = useRouter();
   const [sites, setSites] = useState<GeneratedSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState<Record<string, string>>({});
@@ -26,9 +28,7 @@ export default function AdminSitesPage() {
 
   useEffect(() => {
     async function loadSites() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: user } = await supabase.auth.getUser();
 
       if (!user) {
         setLoading(false);

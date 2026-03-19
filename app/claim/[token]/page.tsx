@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { claimSite } from "@/lib/api/client";
 
 export default function ClaimSitePage({
   params,
@@ -18,21 +19,8 @@ export default function ClaimSitePage({
     setMessage("");
 
     try {
-      const res = await fetch("/api/claim-site", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Claim failed");
-      }
-
-      router.push(`/client/sites/${data.siteId}`);
+      const { siteId } = await claimSite({ token });
+      router.push(`/client/sites/${siteId}`);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Claim failed");

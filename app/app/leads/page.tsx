@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { searchBusinesses, saveLeads, bulkGenerateSites } from "@/lib/api/client";
 
 type LeadResult = {
   id: string;
@@ -53,29 +54,23 @@ export default function LeadsPage() {
     setSelectedIds([]);
 
     try {
-      const res = await fetch("/api/search-businesses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          city,
-          category,
-          radius: Number(radius),
-        }),
-      });
+      const { data: user } = await supabase.auth.getUser();
 
-      const data = (await res.json()) as SearchResponse | { error: string };
-
-      if (!res.ok) {
-        throw new Error("error" in data ? data.error : "Search failed");
+      if (!user) {
+        throw new Error("Unauthorized");
       }
 
-      const leads = (data as SearchResponse).results || [];
+      const response = await searchBusinesses({
+        city,
+        category,
+        radius: Number(radius),
+      });
+
+      const leads = response.results || [];
       setResults(leads);
       setSelectedIds(leads.slice(0, 5).map((lead) => lead.id));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Search failed";
       setError(msg);
     } finally {
       setLoading(false);
@@ -88,36 +83,18 @@ export default function LeadsPage() {
     setMessage("");
 
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: user } = await supabase.auth.getUser();
 
-      if (userError) {
-        throw new Error(userError.message);
+      if (!user) {
+        throw new Error("Unauthorized");
       }
 
       if (!user) {
         throw new Error("Please log in first.");
       }
 
-      const res = await fetch("/api/save-search-results", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          results,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to save leads");
-      }
-
-      setMessage(`Saved ${data.inserted} leads.`);
+      const response = await saveLeads(results);
+      setMessage(`Saved ${response.inserted} leads.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to save leads";
       setError(msg);
@@ -136,35 +113,17 @@ export default function LeadsPage() {
         throw new Error("Select at least one lead first.");
       }
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: user } = await supabase.auth.getUser();
 
-      if (userError) {
-        throw new Error(userError.message);
+      if (!user) {
+        throw new Error("Unauthorized");
       }
 
       if (!user) {
         throw new Error("Please log in first.");
       }
 
-      const saveRes = await fetch("/api/save-search-results", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          results,
-        }),
-      });
-
-      const saveData = await saveRes.json();
-
-      if (!saveRes.ok) {
-        throw new Error(saveData.error || "Failed to save leads before generation");
-      }
-
+      const saveResponse = await saveLeads(results);
       const { data: savedLeads, error: leadsError } = await supabase
         .from("leads")
         .select("*")
@@ -177,24 +136,9 @@ export default function LeadsPage() {
 
       const internalLeadIds = (savedLeads || []).map((lead) => lead.id);
 
-      const bulkRes = await fetch("/api/bulk-generate-sites", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          leadIds: internalLeadIds,
-        }),
-      });
-
-      const bulkData = await bulkRes.json();
-
-      if (!bulkRes.ok) {
-        throw new Error(bulkData.error || "Bulk generation failed");
-      }
-
+      const bulkResponse = await bulkGenerateSites(internalLeadIds);
       setMessage(
-        `Created ${bulkData.created?.length || 0} sites. Failed: ${bulkData.failed?.length || 0}.`
+        `Created ${bulkResponse.created?.length || 0} sites. Failed: ${bulkResponse.failed?.length || 0}.`
       );
     } catch (err) {
       const msg =
@@ -263,7 +207,7 @@ export default function LeadsPage() {
 
         <form
           onSubmit={handleSearch}
-          className="mt-10 grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 md:grid-cols-4"
+          className="mt-10 grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 md:grid-cols-[420px_1fr]"
         >
           <input
             className="rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none"

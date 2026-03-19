@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { searchBusinesses, saveLeads, bulkGenerateSites, generateSite } from "@/lib/api/client";
 
 type LeadRecord = {
   id: string;
@@ -25,8 +26,8 @@ const statuses = ["new", "queued", "contacted", "interested", "closed", "dead"];
 
 export default function LeadDetailPage() {
   const supabase = createClient();
-  const params = useParams();
-  const leadId = params.id as string;
+  const router = useRouter();
+  const leadId = router.query.id as string;
 
   const [lead, setLead] = useState<LeadRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,24 +59,15 @@ export default function LeadDetailPage() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/update-lead-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          leadId,
-          outreachStatus: nextStatus,
-        }),
-      });
+      const { data: updatedLead } = await supabase
+        .from("leads")
+        .update({
+          outreach_status: nextStatus,
+        })
+        .eq("id", leadId)
+        .single();
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Status update failed");
-      }
-
-      setLead(data.lead);
+      setLead(updatedLead);
       setMessage("Lead status updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Status update failed");
@@ -92,24 +84,12 @@ export default function LeadDetailPage() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/generate-and-save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          businessName: lead.business_name,
-          category: lead.category || "local business",
-          city: lead.city || "local market",
-          leadId: lead.id,
-        }),
+      const { data: site } = await generateSite({
+        businessName: lead.business_name,
+        category: lead.category || "local business",
+        city: lead.city || "local market",
+        leadId: lead.id,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Site generation failed");
-      }
 
       const { data: refreshedLead } = await supabase
         .from("leads")
@@ -183,7 +163,7 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto]">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Score</div>
             <div className="mt-2 text-3xl font-semibold">{lead.score}</div>
@@ -203,7 +183,7 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-[1fr_auto]">
             <div>
               <div className="text-sm text-zinc-400">Phone</div>
               <div className="mt-2">{lead.phone || "—"}</div>

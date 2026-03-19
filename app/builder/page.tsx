@@ -124,7 +124,7 @@ export default function BuilderPage() {
                     Hero
                   </div>
                   <h2 className="mt-3 text-4xl font-semibold">{site.headline}</h2>
-                  <p className="mt-4 max-w-2xl text-zinc-400">{site.subheadline}</p>
+                  <p className="mt-4 text-zinc-400">{site.subheadline}</p>
                   <div className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-medium text-black">
                     {site.cta}
                   </div>
