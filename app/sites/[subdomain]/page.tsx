@@ -1,129 +1,137 @@
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
 
-type SiteJson = {
-  headline?: string;
-  subheadline?: string;
-  services?: string[];
-  about?: string;
-  cta?: string;
-  faq?: { question: string; answer: string }[];
-  emergency?: string;
-  testimonials?: string[];
-  menu_highlights?: string[];
-  team?: { name: string; role: string }[];
-  hours?: string;
-  location?: string;
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { useParams } from "next/navigation";
+
+type GeneratedSite = {
+  id: string;
+  business_name: string;
+  city: string | null;
+  category: string | null;
+  subdomain: string;
+  site_type: "admin_generated" | "self_serve";
+  status: "preview" | "active";
+  preview_token: string | null;
+  client_user_id: string | null;
+  lead_id: string | null;
+  site_json: {
+    headline?: string;
+    subheadline?: string;
+    services?: string[];
+    about?: string;
+    cta?: string;
+    faq?: { question: string; answer: string }[];
+    emergency?: string;
+    testimonials?: string[];
+    menu_highlights?: string[];
+    team?: { name: string; role: string }[];
+  };
+  template: {
+    type: string;
+    layout: string;
+    sections: string[];
+  };
 };
 
-type Template = {
-  type: string;
-  layout: string;
-  sections: string[];
-};
+export default function AdminSiteDetailPage() {
+  const supabase = createClient();
+  const params = useParams();
+  const id = params.id as string;
+  const [site, setSite] = useState<GeneratedSite | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function SitePage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ subdomain: string }>;
-  searchParams: Promise<{ token?: string }>;
-}) {
-  const { subdomain } = await params;
-  const { token } = await searchParams;
+  useEffect(() => {
+    async function loadSite() {
+      const { data } = await supabase
+        .from("generated_sites")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  const supabase = await createClient();
+      setSite((data as GeneratedSite | null) ?? null);
+      setLoading(false);
+    }
 
-  const { data: site } = await supabase
-    .from("generated_sites")
-    .select("*")
-    .eq("subdomain", subdomain)
-    .single();
+    if (id) {
+      loadSite();
+    }
+  }, [id, supabase]);
 
-  if (!site) {
-    notFound();
-  }
-
-  const template = site.template as Template;
-  const data = (site.site_json || {}) as SiteJson;
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isAssignedClient = Boolean(user && site.client_user_id && user.id === site.client_user_id);
-  const isOwner = Boolean(user && site.owner_user_id && user.id === site.owner_user_id);
-  const hasPreviewToken =
-    typeof token === "string" &&
-    typeof site.preview_token === "string" &&
-    token.length > 0 &&
-    token === site.preview_token;
-
-  if (!isAssignedClient && !isOwner && !hasPreviewToken) {
+  if (loading) {
     return (
       <main className="min-h-screen bg-black px-6 py-20 text-white">
-        <div className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/5 p-8">
-          <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-            Preview Locked
-          </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-            This website preview requires access
-          </h1>
-          <p className="mt-4 text-zinc-400">
-            Ask DeployLocal for your private preview link or sign in to your client portal.
-          </p>
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 text-zinc-500">
+          Loading site...
         </div>
       </main>
     );
   }
 
+  if (!site) {
+    return (
+      <main className="min-h-screen bg-black px-6 py-20 text-white">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 text-zinc-500">
+          Site not found.
+        </div>
+      </main>
+    );
+  }
+
+  const previewUrl = `/sites/${site.subdomain}${site.preview_token ? `?token=${site.preview_token}` : ""}`;
+
   // Template-specific rendering
-  const renderTemplate = () => {
-    switch (template.type) {
+  const renderTemplateContent = () => {
+    switch (site.template.type) {
       case "plumber":
         return (
-          <div className="space-y-12">
-            <section className="text-center">
-              <h1 className="text-5xl font-bold">
-                {data.headline || site.business_name}
-              </h1>
-              <p className="mt-4 text-lg text-gray-600">
-                {data.subheadline || "Professional plumbing services"}
+          <div className="space-y-8">
+            <section>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Hero
+              </div>
+              <h2 className="mt-3 text-4xl font-semibold">
+                {site.site_json?.headline || site.business_name}
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.subheadline || "Professional plumbing services"}
               </p>
-              <button className="mt-8 rounded-full bg-blue-600 px-8 py-3 text-white font-medium">
-                {data.cta || "Emergency Service"}
-              </button>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">Our Services</h2>
-              <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {(data.services || []).map((service) => (
-                  <div key={service} className="rounded-xl border p-6">
-                    <h3 className="font-semibold">{service}</h3>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Services
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {(site.site_json?.services || []).map((service) => (
+                  <div
+                    key={service}
+                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                  >
+                    {service}
                   </div>
                 ))}
               </div>
             </section>
 
-            {data.emergency && (
-              <section className="bg-red-50 p-8 rounded-xl">
-                <h2 className="text-2xl font-semibold text-red-900">Emergency Services</h2>
-                <p className="mt-4 text-red-700">{data.emergency}</p>
+            {site.site_json?.emergency && (
+              <section>
+                <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                  Emergency Services
+                </div>
+                <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
+                  {site.site_json.emergency}
+                </div>
               </section>
             )}
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">About Us</h2>
-              <p className="mt-4 max-w-2xl mx-auto text-gray-600">
-                {data.about || "Professional plumbing services with years of experience"}
-              </p>
-            </section>
-
-            <section className="bg-gray-50 p-8 rounded-xl">
-              <h2 className="text-3xl font-semibold text-center">Contact Us</h2>
-              <p className="mt-4 text-center text-gray-600">
-                Call us for immediate assistance: (555) 123-4567
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                About
+              </div>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.about || "Professional plumbing services"}
               </p>
             </section>
           </div>
@@ -131,37 +139,47 @@ export default async function SitePage({
 
       case "dentist":
         return (
-          <div className="space-y-12">
-            <section className="text-center">
-              <h1 className="text-5xl font-bold">
-                {data.headline || site.business_name}
-              </h1>
-              <p className="mt-4 text-lg text-gray-600">
-                {data.subheadline || "Comprehensive dental care"}
+          <div className="space-y-8">
+            <section>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Hero
+              </div>
+              <h2 className="mt-3 text-4xl font-semibold">
+                {site.site_json?.headline || site.business_name}
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.subheadline || "Comprehensive dental care"}
               </p>
-              <button className="mt-8 rounded-full bg-blue-600 px-8 py-3 text-white font-medium">
-                {data.cta || "Book Appointment"}
-              </button>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">Our Services</h2>
-              <div className="mt-8 grid gap-6 md:grid-cols-3">
-                {(data.services || []).map((service) => (
-                  <div key={service} className="rounded-xl border p-6">
-                    <h3 className="font-semibold">{service}</h3>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Services
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {(site.site_json?.services || []).map((service) => (
+                  <div
+                    key={service}
+                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                  >
+                    {service}
                   </div>
                 ))}
               </div>
             </section>
 
-            {data.testimonials && data.testimonials.length > 0 && (
+            {site.site_json?.testimonials && site.site_json.testimonials.length > 0 && (
               <section>
-                <h2 className="text-3xl font-semibold text-center">Patient Testimonials</h2>
-                <div className="mt-8 grid gap-6 md:grid-cols-2">
-                  {data.testimonials.map((testimonial, index) => (
-                    <div key={index} className="rounded-xl border p-6 bg-blue-50">
-                      <p className="text-gray-700">"{testimonial}"</p>
+                <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                  Patient Testimonials
+                </div>
+                <div className="mt-4 space-y-4">
+                  {site.site_json.testimonials.map((testimonial, index) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                    >
+                      "{testimonial}"
                     </div>
                   ))}
                 </div>
@@ -169,9 +187,11 @@ export default async function SitePage({
             )}
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">About Our Practice</h2>
-              <p className="mt-4 max-w-2xl mx-auto text-gray-600">
-                {data.about || "Comprehensive dental care with modern technology"}
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                About
+              </div>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.about || "Comprehensive dental care"}
               </p>
             </section>
           </div>
@@ -179,49 +199,64 @@ export default async function SitePage({
 
       case "restaurant":
         return (
-          <div className="space-y-12">
-            <section className="text-center">
-              <h1 className="text-5xl font-bold">
-                {data.headline || site.business_name}
-              </h1>
-              <p className="mt-4 text-lg text-gray-600">
-                {data.subheadline || "Fine dining experience"}
+          <div className="space-y-8">
+            <section>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Hero
+              </div>
+              <h2 className="mt-3 text-4xl font-semibold">
+                {site.site_json?.headline || site.business_name}
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.subheadline || "Fine dining experience"}
               </p>
-              <button className="mt-8 rounded-full bg-blue-600 px-8 py-3 text-white font-medium">
-                {data.cta || "Make Reservation"}
-              </button>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">Menu Highlights</h2>
-              <div className="mt-8 grid gap-6 md:grid-cols-2">
-                {(data.menu_highlights || []).map((item) => (
-                  <div key={item} className="rounded-xl border p-6">
-                    <h3 className="font-semibold">{item}</h3>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Menu Highlights
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {(site.site_json?.menu_highlights || []).map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                  >
+                    {item}
                   </div>
                 ))}
               </div>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">About Our Restaurant</h2>
-              <p className="mt-4 max-w-2xl mx-auto text-gray-600">
-                {data.about || "Fine dining experience with exceptional cuisine"}
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                About
+              </div>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.about || "Fine dining experience"}
               </p>
             </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {data.hours && (
-                <section className="bg-gray-50 p-8 rounded-xl">
-                  <h2 className="text-2xl font-semibold">Hours</h2>
-                  <p className="mt-4 text-gray-600">{data.hours}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {site.site_json?.hours && (
+                <section>
+                  <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                    Hours
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">
+                    {site.site_json.hours}
+                  </div>
                 </section>
               )}
 
-              {data.location && (
-                <section className="bg-gray-50 p-8 rounded-xl">
-                  <h2 className="text-2xl font-semibold">Location</h2>
-                  <p className="mt-4 text-gray-600">{data.location}</p>
+              {site.site_json?.location && (
+                <section>
+                  <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                    Location
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">
+                    {site.site_json.location}
+                  </div>
                 </section>
               )}
             </div>
@@ -230,38 +265,48 @@ export default async function SitePage({
 
       case "barber":
         return (
-          <div className="space-y-12">
-            <section className="text-center">
-              <h1 className="text-5xl font-bold">
-                {data.headline || site.business_name}
-              </h1>
-              <p className="mt-4 text-lg text-gray-600">
-                {data.subheadline || "Professional barber services"}
+          <div className="space-y-8">
+            <section>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Hero
+              </div>
+              <h2 className="mt-3 text-4xl font-semibold">
+                {site.site_json?.headline || site.business_name}
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.subheadline || "Professional barber services"}
               </p>
-              <button className="mt-8 rounded-full bg-blue-600 px-8 py-3 text-white font-medium">
-                {data.cta || "Book Appointment"}
-              </button>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">Our Services</h2>
-              <div className="mt-8 grid gap-6 md:grid-cols-2">
-                {(data.services || []).map((service) => (
-                  <div key={service} className="rounded-xl border p-6">
-                    <h3 className="font-semibold">{service}</h3>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Services
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {(site.site_json?.services || []).map((service) => (
+                  <div
+                    key={service}
+                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                  >
+                    {service}
                   </div>
                 ))}
               </div>
             </section>
 
-            {data.team && data.team.length > 0 && (
+            {site.site_json?.team && site.site_json.team.length > 0 && (
               <section>
-                <h2 className="text-3xl font-semibold text-center">Our Barbers</h2>
-                <div className="mt-8 grid gap-6 md:grid-cols-2">
-                  {data.team.map((member, index) => (
-                    <div key={index} className="rounded-xl border p-6">
-                      <h3 className="font-semibold">{member.name}</h3>
-                      <p className="text-gray-600">{member.role}</p>
+                <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                  Our Team
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {site.site_json.team.map((member, index) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                    >
+                      <div className="font-medium">{member.name}</div>
+                      <div className="text-sm text-zinc-400">{member.role}</div>
                     </div>
                   ))}
                 </div>
@@ -269,9 +314,11 @@ export default async function SitePage({
             )}
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">About Our Shop</h2>
-              <p className="mt-4 max-w-2xl mx-auto text-gray-600">
-                {data.about || "Professional barber services with modern style"}
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                About
+              </div>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.about || "Professional barber services"}
               </p>
             </section>
           </div>
@@ -279,34 +326,41 @@ export default async function SitePage({
 
       default:
         return (
-          <div className="space-y-12">
-            <section className="text-center">
-              <h1 className="text-5xl font-bold">
-                {data.headline || site.business_name}
-              </h1>
-              <p className="mt-4 text-lg text-gray-600">
-                {data.subheadline || "Your business website"}
+          <div className="space-y-8">
+            <section>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Hero
+              </div>
+              <h2 className="mt-3 text-4xl font-semibold">
+                {site.site_json?.headline || site.business_name}
+              </h2>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.subheadline || "Your business website"}
               </p>
-              <button className="mt-8 rounded-full bg-blue-600 px-8 py-3 text-white font-medium">
-                {data.cta || "Learn More"}
-              </button>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">Our Services</h2>
-              <div className="mt-8 grid gap-6 md:grid-cols-2">
-                {(data.services || []).map((service) => (
-                  <div key={service} className="rounded-xl border p-6">
-                    <h3 className="font-semibold">{service}</h3>
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                Services
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {(site.site_json?.services || []).map((service) => (
+                  <div
+                    key={service}
+                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
+                  >
+                    {service}
                   </div>
                 ))}
               </div>
             </section>
 
             <section>
-              <h2 className="text-3xl font-semibold text-center">About Us</h2>
-              <p className="mt-4 max-w-2xl mx-auto text-gray-600">
-                {data.about || "Your business description"}
+              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+                About
+              </div>
+              <p className="mt-4 text-zinc-400">
+                {site.site_json?.about || "Your business description"}
               </p>
             </section>
           </div>
@@ -315,13 +369,73 @@ export default async function SitePage({
   };
 
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="border-b bg-amber-50 px-4 py-3 text-center text-sm font-medium text-amber-900">
-        DeployLocal Preview · This site is in preview mode and not yet activated.
-      </div>
+    <main className="min-h-screen bg-black px-6 py-20 text-white">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
+              Site Detail
+            </div>
+            <h1 className="mt-4 text-5xl font-semibold tracking-tight">
+              {site.business_name}
+            </h1>
+            <p className="mt-4 text-zinc-400">
+              {site.subdomain}.deploylocal.app · {site.status}
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Template: {site.template.type} ({site.template.layout} layout)
+            </p>
+          </div>
 
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        {renderTemplate()}
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={previewUrl}
+              className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black"
+            >
+              Open Preview
+            </Link>
+            {site.lead_id ? (
+              <Link
+                href={`/app/leads/${site.lead_id}`}
+                className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
+              >
+                View Lead
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-5">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Type</div>
+            <div className="mt-2 text-lg font-semibold">{site.site_type}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Status</div>
+            <div className="mt-2 text-lg font-semibold">{site.status}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">City</div>
+            <div className="mt-2 text-lg font-semibold">{site.city || "—"}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Category</div>
+            <div className="mt-2 text-lg font-semibold">{site.category || "—"}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Template</div>
+            <div className="mt-2 text-lg font-semibold">{site.template.type}</div>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-8">
+          {site.status === "preview" && (
+            <div className="mb-6 rounded-2xl border border-yellow-500/50 bg-yellow-500/10 p-4 text-center text-yellow-300">
+              Preview — Not Live
+            </div>
+          )}
+          {renderTemplateContent()}
+        </div>
       </div>
     </main>
   );

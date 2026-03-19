@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import crypto from "crypto";
 
 function createPreviewToken() {
   return crypto.randomUUID().replace(/-/g, "");
@@ -50,8 +51,8 @@ export async function POST(req: Request) {
         subdomain,
         site_json: site,
         site_type: "admin_generated",
-        status: "preview",
-        preview_token: createPreviewToken(),
+        status: "preview", // Set to preview mode
+        preview_token: createPreviewToken(), // Generate token
         lead_id: leadId || null,
         template: template, // Add template information
       })

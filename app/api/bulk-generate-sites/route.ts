@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import crypto from "crypto";
 
 function createPreviewToken() {
   return crypto.randomUUID().replace(/-/g, "");
@@ -77,8 +78,8 @@ export async function POST(req: Request) {
             subdomain: genData.subdomain,
             site_json: genData.site,
             site_type: "admin_generated",
-            status: "preview",
-            preview_token: previewToken,
+            status: "preview", // Set to preview mode
+            preview_token: previewToken, // Generate token
             lead_id: lead.id,
           })
           .select()

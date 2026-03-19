@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       .from("generated_sites")
       .update({
         client_user_id: user.id,
+        status: "active", // Transition to active mode
       })
       .eq("id", invite.generated_site_id);
 
