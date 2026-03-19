@@ -19,10 +19,8 @@ CREATE TABLE IF NOT EXISTS lead_queue (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   processed_at TIMESTAMPTZ,
   site_id UUID REFERENCES generated_sites(id),
-  error_message TEXT,
-  CONSTRAINT lead_queue_lead_id_unique UNIQUE (lead_id)
+  error_message TEXT
 );
 
--- Add indexes for queue processing
-CREATE INDEX IF NOT EXISTS lead_queue_status_idx ON public.lead_queue (status);
+-- Add indexes for queue processingCREATE INDEX IF NOT EXISTS lead_queue_status_idx ON public.lead_queue (status);
 CREATE INDEX IF NOT EXISTS lead_queue_created_at_idx ON public.lead_queue (created_at);
