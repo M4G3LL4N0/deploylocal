@@ -17,6 +17,7 @@ type LeadResult = {
   rating: number | null;
   review_count: number | null;
   score: number;
+  website_quality_score: number | null;
 };
 
 type SearchResponse = {
@@ -291,13 +292,14 @@ export default function LeadsPage() {
                   <th className="px-4 py-4 font-medium">Rating</th>
                   <th className="px-4 py-4 font-medium">Reviews</th>
                   <th className="px-4 py-4 font-medium">Score</th>
+                  <th className="px-4 py-4 font-medium">Website Quality</th>
                 </tr>
               </thead>
               <tbody>
                 {results.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={10}
                       className="px-4 py-10 text-center text-zinc-500"
                     >
                       No leads yet. Search by city and category to begin.
@@ -352,6 +354,15 @@ export default function LeadsPage() {
                         <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white">
                           {lead.score}
                         </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        {lead.website_quality_score !== null ? (
+                          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white">
+                            {lead.website_quality_score}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                     </tr>
                   ))

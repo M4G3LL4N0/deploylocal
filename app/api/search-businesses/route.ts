@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { scoreLead } from "@/lib/scoring/leadScore";
+import { analyzeWebsite, fetchWebsiteHtml } from "@/lib/website-analysis";
 
 type SearchRequestBody = {
   city?: string;
@@ -19,6 +20,7 @@ type LeadResult = {
   rating: number | null;
   review_count: number | null;
   score: number;
+  website_quality_score: number | null;
 };
 
 type PlacesSearchTextPlace = {
@@ -137,6 +139,16 @@ export async function POST(req: Request) {
           place.types?.[0]?.replaceAll("_", " ") ?? category;
         const hasWebsite = Boolean(details.website);
 
+        let websiteQualityScore: number | null = null;
+        if (hasWebsite && details.website) {
+          try {
+            const html = await fetchWebsiteHtml(details.website);
+            websiteQualityScore = analyzeWebsite(html);
+          } catch (error) {
+            websiteQualityScore = 0;
+          }
+        }
+
         return {
           id: placeId,
           business_name: businessName,
@@ -161,7 +173,9 @@ export async function POST(req: Request) {
             phone: details.phone,
             category: derivedCategory,
             business_name: businessName,
+            website_quality_score: websiteQualityScore,
           }),
+          website_quality_score: websiteQualityScore,
         };
       })
     );

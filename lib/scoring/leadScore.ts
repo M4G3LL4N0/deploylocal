@@ -5,6 +5,7 @@ export interface LeadForScoring {
   phone: string;
   category: string;
   business_name: string;
+  website_quality_score?: number | null;
 }
 
 const HIGH_VALUE_CATEGORIES = [
@@ -41,6 +42,10 @@ export function scoreLead(lead: LeadForScoring): number {
   // Website presence (major weight)
   if (lead.has_website) {
     score += 30;
+    // If we have a quality score, adjust: lower quality means more points (higher opportunity)
+    if (lead.website_quality_score !== null && lead.website_quality_score !== undefined) {
+      score += (100 - lead.website_quality_score) * 0.5;
+    }
   }
 
   // Rating scoring

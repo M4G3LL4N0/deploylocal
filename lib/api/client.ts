@@ -18,6 +18,7 @@ type SearchResponse = {
     rating: number | null;
     review_count: number | null;
     score: number;
+    website_quality_score: number | null;
   }[];
 };
 
@@ -33,6 +34,7 @@ type LeadInput = {
   rating: number | null;
   review_count: number | null;
   score: number;
+  website_quality_score: number | null;
 };
 
 type SiteInput = {

@@ -13,6 +13,7 @@ type LeadInput = {
   rating: number | null;
   review_count: number | null;
   score: number;
+  website_quality_score: number | null;
 };
 
 export async function POST(req: Request) {
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
       rating: lead.rating,
       review_count: lead.review_count,
       score: lead.score,
+      website_quality_score: lead.website_quality_score,
       status: "new",
       outreach_status: "new",
     }));

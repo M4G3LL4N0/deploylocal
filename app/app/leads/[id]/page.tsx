@@ -20,6 +20,7 @@ type LeadRecord = {
   score: number;
   outreach_status: string | null;
   generated_site_id: string | null;
+  website_quality_score: number | null;
 };
 
 const statuses = ["new", "queued", "contacted", "interested", "closed", "dead"];
@@ -163,7 +164,7 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto]">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Score</div>
             <div className="mt-2 text-3xl font-semibold">{lead.score}</div>
@@ -180,26 +181,27 @@ export default function LeadDetailPage() {
               {lead.outreach_status || "new"}
             </div>
           </div>
-        </div>
-
-        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="grid gap-6 md:grid-cols-[1fr_auto]">
-            <div>
-              <div className="text-sm text-zinc-400">Phone</div>
-              <div className="mt-2">{lead.phone || "—"}</div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Website Quality</div>
+            <div className="mt-2 text-3xl font-semibold">
+              {lead.website_quality_score !== null ? lead.website_quality_score : "—"}
             </div>
-            <div>
-              <div className="text-sm text-zinc-400">Address</div>
-              <div className="mt-2">{lead.address || "—"}</div>
-            </div>
-            <div>
-              <div className="text-sm text-zinc-400">Rating</div>
-              <div className="mt-2">{lead.rating ?? "—"}</div>
-            </div>
-            <div>
-              <div className="text-sm text-zinc-400">Review Count</div>
-              <div className="mt-2">{lead.review_count ?? "—"}</div>
-            </div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Phone</div>
+            <div className="mt-2">{lead.phone || "—"}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Address</div>
+            <div className="mt-2">{lead.address || "—"}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Rating</div>
+            <div className="mt-2">{lead.rating ?? "—"}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Review Count</div>
+            <div className="mt-2">{lead.review_count ?? "—"}</div>
           </div>
         </div>
 
