@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { searchBusinesses, saveLeads, bulkGenerateSites, generateSite } from "@/lib/api/client";
+import { generateSite } from "@/lib/api/client";
+import { generateOutreachMessage } from "@/lib/ai/outreach";
 
 type LeadRecord = {
   id: string;
@@ -34,8 +35,14 @@ export default function LeadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [siteGenerating, setSiteGenerating] = useState(false);
+  const [pitchGenerating, setPitchGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [outreachMessages, setOutreachMessages] = useState<{
+    callScript: string;
+    sms: string;
+    email: { subject: string; body: string };
+  } | null>(null);
 
   useEffect(() => {
     async function loadLead() {
@@ -107,6 +114,25 @@ export default function LeadDetailPage() {
     }
   }
 
+  async function generatePitch() {
+    if (!lead || !lead.generated_site_id) return;
+
+    setPitchGenerating(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const sitePreviewUrl = `/${lead.generated_site_id}`;
+      const messages = generateOutreachMessage(lead, sitePreviewUrl);
+      setOutreachMessages(messages);
+      setMessage("Pitch generated successfully.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Pitch generation failed");
+    } finally {
+      setPitchGenerating(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-black px-6 py-20 text-white">
@@ -154,12 +180,22 @@ export default function LeadDetailPage() {
             </button>
 
             {lead.generated_site_id ? (
-              <Link
-                href={`/app/sites/${lead.generated_site_id}`}
-                className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
-              >
-                View Site
-              </Link>
+              <>
+                <Link
+                  href={`/app/sites/${lead.generated_site_id}`}
+                  className="rounded-full border border-white/15 px-5 py-3 text-sm text-white"
+                >
+                  View Site
+                </Link>
+                <button
+                  type="button"
+                  onClick={generatePitch}
+                  disabled={pitchGenerating}
+                  className="rounded-full bg-emerald-500 px-5 py-3 text-sm font-medium text-black disabled:opacity-60"
+                >
+                  {pitchGenerating ? "Generating..." : "Generate Pitch"}
+                </button>
+              </>
             ) : null}
           </div>
         </div>
@@ -204,6 +240,35 @@ export default function LeadDetailPage() {
             <div className="mt-2">{lead.review_count ?? "—"}</div>
           </div>
         </div>
+
+        {outreachMessages && (
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-zinc-400">Generated Outreach Messages</div>
+            
+            <div className="mt-6 space-y-6">
+              <div className="border border-white/5 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3">Cold Call Script</h3>
+                <p className="text-zinc-300 whitespace-pre-line">{outreachMessages.callScript}</p>
+              </div>
+              
+              <div className="border border-white/5 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3">SMS Message</h3>
+                <p className="text-zinc-300 whitespace-pre-line">{outreachMessages.sms}</p>
+              </div>
+              
+              <div className="border border-white/5 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3">Email</h3>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm text-zinc-400">Subject: </span>
+                    <span className="text-white">{outreachMessages.email.subject}</span>
+                  </div>
+                  <div className="text-zinc-300 whitespace-pre-line">{outreachMessages.email.body}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="text-sm text-zinc-400">Update Outreach Status</div>
