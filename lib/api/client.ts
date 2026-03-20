@@ -74,6 +74,34 @@ type ClaimInput = {
   token: string;
 };
 
+export async function apiFetch<T>(endpoint: string, body: any): Promise<T> {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    const response = await fetch(`/api/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "API request failed");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API request to ${endpoint} failed:`, error);
+    throw error instanceof Error ? error : new Error("API request failed");
+  }
+}
+
 export async function searchBusinesses({
   city,
   category,
@@ -82,84 +110,30 @@ export async function searchBusinesses({
   city: string;
   category: string;
   radius?: number;
-}) {
-  const { data: user } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  const response = await fetch("/api/search-businesses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      city,
-      category,
-      radius,
-    }),
+}): Promise<SearchResponse> {
+  return apiFetch<SearchResponse>("search-businesses", {
+    city,
+    category,
+    radius,
   });
-
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || "Search failed");
-  }
-
-  return (await response.json()) as SearchResponse;
 }
 
-export async function saveLeads(leads: LeadInput[]) {
-  const { data: user } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  const response = await fetch("/api/save-search-results", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      results: leads,
-    }),
+export async function saveLeads(leads: LeadInput[]): Promise<{ inserted: number }> {
+  return apiFetch<{ inserted: number }>("save-search-results", {
+    results: leads,
   });
-
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || "Failed to save leads");
-  }
-
-  return (await response.json()) as { inserted: number };
 }
 
-export async function bulkGenerateSites(leadIds: string[]) {
-  const { data: user } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  const response = await fetch("/api/bulk-generate-sites", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      leadIds,
-    }),
-  });
-
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || "Bulk generation failed");
-  }
-
-  return (await response.json()) as {
+export async function bulkGenerateSites(leadIds: string[]): Promise<{
+  created: string[];
+  failed: string[];
+}> {
+  return apiFetch<{
     created: string[];
     failed: string[];
-  };
+  }>("bulk-generate-sites", {
+    leadIds,
+  });
 }
 
 export async function generateSite({
