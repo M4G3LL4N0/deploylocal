@@ -19,12 +19,16 @@ export default function Button({
     primary: "bg-white text-black hover:bg-black/5",
     secondary: "bg-black/20 text-white hover:bg-black/30",
     outline: "border border-white/10 text-white hover:bg-white/5",
+    bulk: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30",
+    danger: "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30",
+    disabled: "bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed",
   };
 
   const sizeClasses = {
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2 text-base",
     lg: "px-6 py-3 text-lg",
+    xl: "px-8 py-4 text-lg",
   };
 
   return (

@@ -185,24 +185,26 @@ export default function LeadsPage() {
             >
               View Queue
             </Link>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="md"
               onClick={handleSaveLeads}
               disabled={saving || results.length === 0}
-              className="rounded-full border border-white/15 px-5 py-3 text-sm text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full"
             >
               {saving ? "Saving..." : "Save Leads"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="bulk"
+              size="md"
               onClick={handleBulkGenerate}
               disabled={bulkGenerating || results.length === 0 || selectedIds.length === 0}
-              className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full"
             >
               {bulkGenerating
                 ? "Generating..."
                 : `Generate Sites (${selectedIds.length})`}
-            </button>
+            </Button>
           </div>
         </div>
 
