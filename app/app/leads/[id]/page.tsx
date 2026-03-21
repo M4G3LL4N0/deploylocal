@@ -255,11 +255,52 @@ export default function LeadDetailPage() {
           </div>
         )}
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-zinc-400">Score</div>
-            <div className="mt-2 text-3xl font-semibold">{lead.score}</div>
+        {/* Score Breakdown */}
+        <Card title="Lead Score" description="How we evaluate this lead's potential">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2">
+              <div className="text-sm text-zinc-400">Overall Score</div>
+              <div className="text-3xl font-semibold">{lead.score}</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm text-zinc-400">Website</div>
+              <div className="text-lg font-semibold">
+                {lead.has_website ? (
+                  <span className="text-emerald-500">Has website</span>
+                ) : (
+                  <span className="text-red-500">Missing website</span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm text-zinc-400">Reviews</div>
+              <div className="text-lg font-semibold">
+                {lead.review_count || 0} reviews
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm text-zinc-400">Contact Info</div>
+              <div className="text-lg font-semibold">
+                {lead.phone ? (
+                  <span className="text-emerald-500">Available</span>
+                ) : (
+                  <span className="text-red-500">Missing</span>
+                )}
+              </div>
+            </div>
           </div>
+          <div className="mt-4 space-y-2">
+            <div className="text-sm text-zinc-400">Score Breakdown</div>
+            <div className="space-y-1">
+              {Object.entries(scoreBreakdown).map(([key, value]) => (
+                <div key={key} className="flex items-center justify-between">
+                  <span className="capitalize">{key}</span>
+                  <span className="font-medium">{value} pts</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Website</div>
             <div className="mt-2 text-lg font-semibold">
