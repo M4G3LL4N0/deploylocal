@@ -54,7 +54,34 @@ Output format:
       "Drain Cleaning",
       "Water Heater Services",
       "Bathroom & Kitchen Plumbing"
-    ]
+    ],
+    pages: {
+      home: {
+        headline: "Professional Plumbing Services",
+        subheadline: "Reliable solutions for your home or business"
+      },
+      services: {
+        headline: "Our Services",
+        sections: [
+          {
+            title: "What We Offer",
+            items: [
+              "Emergency Plumbing Services",
+              "Leak Repair & Detection",
+              "Pipe Installation & Repair"
+            ]
+          }
+        ]
+      },
+      about: {
+        headline: "About Us",
+        content: "We are a team of experienced plumbers dedicated to providing top-quality service."
+      },
+      contact: {
+        headline: "Contact Us",
+        content: "Get in touch with us today for all your plumbing needs!"
+      }
+    }
   },
   dentist: {
     layout: "horizontal",
@@ -248,8 +275,47 @@ export async function POST(req: Request) {
 
     const subdomain = slugify(businessName);
 
+    // Convert legacy single-page format to multi-page format
+    const multiPageJson = {
+      pages: {
+        home: {
+          headline: siteJson.headline,
+          subheadline: siteJson.subheadline,
+          sections: [
+            {
+              title: "Services",
+              items: siteJson.services
+            },
+            {
+              title: "About",
+              content: siteJson.about
+            }
+          ]
+        },
+        services: {
+          headline: "Our Services",
+          sections: [
+            {
+              title: "What We Offer",
+              items: siteJson.services
+            }
+          ]
+        },
+        about: {
+          headline: "About Us",
+          content: siteJson.about
+        },
+        contact: {
+          headline: "Contact Us",
+          content: "Get in touch with us today!"
+        }
+      },
+      // Preserve legacy fields for backward compatibility
+      ...siteJson
+    };
+
     return NextResponse.json({
-      site: siteJson,
+      site: multiPageJson,
       subdomain,
       template: {
         type: categoryLower,
