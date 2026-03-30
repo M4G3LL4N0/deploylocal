@@ -300,7 +300,7 @@ export default function LeadDetailPage() {
               ))}
             </div>
           </div>
-        </Card>
+        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Website</div>
             <div className="mt-2 text-lg font-semibold">
