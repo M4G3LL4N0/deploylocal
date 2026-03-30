@@ -256,8 +256,9 @@ export default function LeadDetailPage() {
         )}
 
         {/* Score Breakdown */}
-        <Card title="Lead Score" description="How we evaluate this lead's potential">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="text-sm text-zinc-400">Lead Score</div>
+          <div className="mt-2 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <div className="text-sm text-zinc-400">Overall Score</div>
               <div className="text-3xl font-semibold">{lead.score}</div>
@@ -289,17 +290,7 @@ export default function LeadDetailPage() {
               </div>
             </div>
           </div>
-          <div className="mt-4 space-y-2">
-            <div className="text-sm text-zinc-400">Score Breakdown</div>
-            <div className="space-y-1">
-              {Object.entries(scoreBreakdown).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="capitalize">{key}</span>
-                  <span className="font-medium">{value} pts</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        </div>
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Website</div>
