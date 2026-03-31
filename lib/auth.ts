@@ -1,34 +1,43 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ApiResponse } from "@/types";
 
 type Profile = {
   id: string;
   email: string | null;
   role: "admin" | "client";
+  created_at: string;
 };
 
-export async function getCurrentUser() {
-  const supabase = await createClient();
+export async function getCurrentUser(): Promise<{
+  supabase: ReturnType<typeof createClient>;
+  user: { id: string; email?: string | null } | null;
+  profile: Profile | null;
+}> {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (!user || error) {
+      return { supabase, user: null, profile: null };
+    }
 
-  if (!user) {
-    return { supabase, user: null, profile: null as Profile | null };
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, email, role, created_at")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Profile fetch error:", profileError.message);
+      return { supabase, user, profile: null };
+    }
+
+    return { supabase, user, profile };
+  } catch (error) {
+    console.error("Auth fetch error:", error);
+    throw new Error("Failed to fetch current user");
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, email, role")
-    .eq("id", user.id)
-    .single();
-
-  return {
-    supabase,
-    user,
-    profile: (profile as Profile | null) ?? null,
-  };
 }
 
 export async function requireAdmin() {
