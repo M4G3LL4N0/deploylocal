@@ -126,6 +126,80 @@ export default function LeadDetailPage() {
     }
   }
 
+  async function handleGenerateSMS() {
+    try {
+      const res = await fetch("/api/generate-sms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          leadId: lead.id,
+          phone: lead.phone,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "SMS generation failed");
+      }
+
+      navigator.clipboard.writeText(data.message);
+      setMessage("SMS message copied to clipboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "SMS generation failed");
+    }
+  }
+
+  async function handleGenerateEmail() {
+    try {
+      const res = await fetch("/api/generate-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          leadId: lead.id,
+          email: lead.email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Email generation failed");
+      }
+
+      navigator.clipboard.writeText(data.message);
+      setMessage("Email message copied to clipboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Email generation failed");
+    }
+  }
+
+  async function handleCopyPreviewLink() {
+    if (!lead.generated_site_id) return;
+
+    try {
+      const { data: site } = await supabase
+        .from("generated_sites")
+        .select("preview_token")
+        .eq("id", lead.generated_site_id)
+        .single();
+
+      if (!site?.preview_token) {
+        throw new Error("Preview token not found");
+      }
+
+      const previewUrl = `${window.location.origin}/preview/${site.preview_token}`;
+      navigator.clipboard.writeText(previewUrl);
+      setMessage("Preview link copied to clipboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to copy preview link");
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-black px-6 py-20 text-white">
@@ -183,30 +257,69 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
+        {/* Lead Metrics */}
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Score</div>
             <div className="mt-2 text-3xl font-semibold">{lead.score}</div>
+            <div className="mt-1 text-sm text-zinc-400">
+              {lead.score > 70 ? 'High Priority' :
+               lead.score > 40 ? 'Medium Priority' : 'Low Priority'}
+            </div>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Website</div>
             <div className="mt-2 text-lg font-semibold">
               {lead.has_website ? "Has website" : "Missing website"}
             </div>
+            {lead.website_quality_score !== null && (
+              <div className="mt-1 text-sm text-zinc-400">
+                Quality: {lead.website_quality_score}/100
+              </div>
+            )}
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-sm text-zinc-400">Outreach Status</div>
-            <div className="mt-2 text-lg font-semibold">
+            <div className="mt-2 text-lg font-semibold capitalize">
               {lead.outreach_status || "new"}
+            </div>
+            <div className="mt-1 text-sm text-zinc-400">
+              Last updated: {new Date(lead.updated_at || lead.created_at).toLocaleDateString()}
             </div>
           </div>
         </div>
 
+        {/* Lead Details */}
         <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <div className="text-sm text-zinc-400">Phone</div>
-              <div className="mt-2">{lead.phone || "—"}</div>
+              <div className="mt-2 flex items-center gap-2">
+                {lead.phone || "—"}
+                {lead.phone && (
+                  <>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(lead.phone!)}
+                      className="text-zinc-400 hover:text-white transition"
+                      title="Copy phone"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    </button>
+                    <a
+                      href={`tel:${lead.phone}`}
+                      className="text-zinc-400 hover:text-white transition"
+                      title="Call lead"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
             <div>
               <div className="text-sm text-zinc-400">Address</div>
@@ -223,20 +336,54 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
+        {/* Outreach Actions */}
         <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="text-sm text-zinc-400">Update Outreach Status</div>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {statuses.map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => updateStatus(status)}
-                disabled={statusUpdating}
-                className="rounded-full border border-white/15 px-4 py-2 text-sm text-white disabled:opacity-60"
-              >
-                {status}
-              </button>
-            ))}
+          <div className="text-sm text-zinc-400">Outreach Actions</div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {/* Status Update */}
+            <div>
+              <div className="text-sm text-zinc-400 mb-2">Update Status</div>
+              <div className="flex flex-wrap gap-2">
+                {statuses.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => updateStatus(status)}
+                    disabled={statusUpdating}
+                    className="rounded-full border border-white/15 px-3 py-1 text-sm text-white disabled:opacity-60"
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Communication Actions */}
+            <div>
+              <div className="text-sm text-zinc-400 mb-2">Communicate</div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleGenerateSMS()}
+                  className="rounded-full border border-white/15 px-3 py-1 text-sm text-white"
+                >
+                  Generate SMS
+                </button>
+                <button
+                  onClick={() => handleGenerateEmail()}
+                  className="rounded-full border border-white/15 px-3 py-1 text-sm text-white"
+                >
+                  Generate Email
+                </button>
+                {lead.generated_site_id && (
+                  <button
+                    onClick={() => handleCopyPreviewLink()}
+                    className="rounded-full border border-white/15 px-3 py-1 text-sm text-white"
+                  >
+                    Copy Preview Link
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
