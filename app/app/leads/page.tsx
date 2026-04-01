@@ -160,6 +160,34 @@ export default function LeadsPage() {
     setSelectedIds(topFiveIds);
   }
 
+  async function handleGenerateSite(leadId: string) {
+    try {
+      const lead = results.find(l => l.id === leadId);
+      if (!lead) return;
+
+      const res = await fetch("/api/generate-and-save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          businessName: lead.business_name,
+          category: lead.category || "local business",
+          city: lead.city || "local market",
+          leadId: lead.id,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Site generation failed");
+      }
+
+      setMessage("Site generated successfully");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Site generation failed");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-black px-6 py-20 text-white">
       <div className="mx-auto max-w-7xl">
@@ -285,16 +313,23 @@ export default function LeadsPage() {
             <table className="min-w-full border-collapse text-left text-sm">
               <thead className="border-b border-white/10 bg-black/30 text-zinc-400">
                 <tr>
-                  <th className="px-4 py-4 font-medium">Select</th>
+                  <th className="px-4 py-4 font-medium">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === results.length}
+                      onChange={() => 
+                        selectedIds.length === results.length 
+                          ? setSelectedIds([])
+                          : setSelectedIds(results.map(lead => lead.id))
+                      }
+                    />
+                  </th>
                   <th className="px-4 py-4 font-medium">Business</th>
                   <th className="px-4 py-4 font-medium">Category</th>
                   <th className="px-4 py-4 font-medium">Phone</th>
-                  <th className="px-4 py-4 font-medium">Address</th>
                   <th className="px-4 py-4 font-medium">Website</th>
-                  <th className="px-4 py-4 font-medium">Rating</th>
-                  <th className="px-4 py-4 font-medium">Reviews</th>
                   <th className="px-4 py-4 font-medium">Score</th>
-                  <th className="px-4 py-4 font-medium">Website Quality</th>
+                  <th className="px-4 py-4 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,13 +346,14 @@ export default function LeadsPage() {
                   results.map((lead) => (
                     <tr
                       key={lead.id}
-                      className="border-b border-white/5 last:border-b-0"
+                      className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-colors"
                     >
                       <td className="px-4 py-4">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(lead.id)}
                           onChange={() => toggleLead(lead.id)}
+                          className="rounded border-white/20 focus:ring-white/50"
                         />
                       </td>
                       <td className="px-4 py-4">
@@ -326,45 +362,88 @@ export default function LeadsPage() {
                         </div>
                         <div className="text-xs text-zinc-500">{lead.city}</div>
                       </td>
-                      <td className="px-4 py-4 text-zinc-300">
-                        {lead.category || "—"}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-300">
-                        {lead.phone || "—"}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-300">
-                        {lead.address || "—"}
-                      </td>
                       <td className="px-4 py-4">
-                        {lead.has_website ? (
-                          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-xs text-yellow-300">
-                            No
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-300">
-                        {lead.rating ?? "—"}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-300">
-                        {lead.review_count ?? "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white">
-                          {lead.score}
+                        <span className="rounded-full bg-white/10 px-2 py-1 text-xs text-white">
+                          {lead.category || "—"}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        {lead.website_quality_score !== null ? (
-                          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white">
-                            {lead.website_quality_score}
-                          </span>
+                        {lead.phone ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-white">{lead.phone}</span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(lead.phone)}
+                              className="text-zinc-400 hover:text-white transition"
+                              title="Copy phone"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                              </svg>
+                            </button>
+                          </div>
                         ) : (
-                          "—"
+                          <span className="text-zinc-500">—</span>
                         )}
+                      </td>
+                      <td className="px-4 py-4">
+                        {lead.website_url ? (
+                          <a
+                            href={lead.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white hover:underline flex items-center gap-1"
+                          >
+                            Visit
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                              <polyline points="15 3 21 3 21 9"></polyline>
+                              <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                          </a>
+                        ) : (
+                          <span className="text-zinc-500">No website</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 bg-white/10 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full ${
+                                lead.score > 70 ? 'bg-green-500' :
+                                lead.score > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`} 
+                              style={{ width: `${lead.score}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-zinc-400">
+                            {lead.score.toFixed(0)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <Link
+                            href={`/app/leads/${lead.id}`}
+                            className="text-zinc-400 hover:text-white transition"
+                            title="View lead"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                          </Link>
+                          <button
+                            onClick={() => handleGenerateSite(lead.id)}
+                            className="text-zinc-400 hover:text-white transition"
+                            title="Generate site"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                              <polyline points="13 2 13 9 20 9"></polyline>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
