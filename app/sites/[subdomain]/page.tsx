@@ -5,6 +5,25 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
 
+type PageContent = {
+  headline: string;
+  subheadline?: string;
+  content?: string;
+  cta?: string;
+  sections?: {
+    title: string;
+    items: string[];
+  }[];
+};
+
+type SitePages = {
+  home: PageContent;
+  services: PageContent;
+  about: PageContent;
+  contact: PageContent;
+  [key: string]: PageContent;
+};
+
 type GeneratedSite = {
   id: string;
   business_name: string;
@@ -17,6 +36,8 @@ type GeneratedSite = {
   client_user_id: string | null;
   lead_id: string | null;
   site_json: {
+    pages?: SitePages;
+    // Backwards compatible fields
     headline?: string;
     subheadline?: string;
     services?: string[];
@@ -41,6 +62,7 @@ export default function AdminSiteDetailPage() {
   const id = params.id as string;
   const [site, setSite] = useState<GeneratedSite | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     async function loadSite() {
@@ -58,6 +80,101 @@ export default function AdminSiteDetailPage() {
       loadSite();
     }
   }, [id, supabase]);
+
+  function renderPageContent() {
+    if (!site) return null;
+
+    // Backwards compatibility for older sites
+    if (!site.site_json.pages) {
+      return (
+        <div className="mt-8 space-y-8">
+          <h2 className="text-3xl font-semibold tracking-tight">
+            {site.site_json.headline || site.business_name}
+          </h2>
+          <p className="mt-4 text-lg text-zinc-400">
+            {site.site_json.subheadline || "Professional services"}
+          </p>
+          
+          {site.site_json.services && (
+            <div className="mt-6">
+              <h3 className="text-xl font-semibold">Our Services</h3>
+              <ul className="mt-2 list-disc pl-5">
+                {site.site_json.services.map((service, i) => (
+                  <li key={i} className="mt-1 text-zinc-400">
+                    {service}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const page = site.site_json.pages[currentPage];
+    if (!page) return null;
+
+    return (
+      <div className="mt-8 space-y-8">
+        <h2 className="text-3xl font-semibold tracking-tight">
+          {page.headline}
+        </h2>
+        
+        {page.subheadline && (
+          <p className="text-lg text-zinc-400">{page.subheadline}</p>
+        )}
+
+        {page.content && (
+          <div className="prose prose-invert max-w-none">
+            <p>{page.content}</p>
+          </div>
+        )}
+
+        {page.sections && page.sections.map((section, i) => (
+          <div key={i} className="mt-6">
+            <h3 className="text-xl font-semibold">{section.title}</h3>
+            <ul className="mt-2 list-disc pl-5">
+              {section.items.map((item, j) => (
+                <li key={j} className="mt-1 text-zinc-400">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        {page.cta && (
+          <div className="mt-8">
+            <button className="rounded-full bg-white px-6 py-3 text-sm font-medium text-black">
+              {page.cta}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderNavigation() {
+    if (!site?.site_json?.pages) return null;
+
+    return (
+      <nav className="flex flex-wrap gap-4 border-b border-white/10 pb-4">
+        {Object.keys(site.site_json.pages).map((pageKey) => (
+          <button
+            key={pageKey}
+            onClick={() => setCurrentPage(pageKey)}
+            className={`px-3 py-2 text-sm font-medium ${
+              currentPage === pageKey
+                ? 'text-white border-b-2 border-white'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {pageKey.charAt(0).toUpperCase() + pageKey.slice(1)}
+          </button>
+        ))}
+      </nav>
+    );
+  }
 
   if (loading) {
     return (
@@ -80,293 +197,6 @@ export default function AdminSiteDetailPage() {
   }
 
   const previewUrl = `/sites/${site.subdomain}${site.preview_token ? `?token=${site.preview_token}` : ""}`;
-
-  // Template-specific rendering
-  const renderTemplateContent = () => {
-    switch (site.template.type) {
-      case "plumber":
-        return (
-          <div className="space-y-8">
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Hero
-              </div>
-              <h2 className="mt-3 text-4xl font-semibold">
-                {site.site_json?.headline || site.business_name}
-              </h2>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.subheadline || "Professional plumbing services"}
-              </p>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Services
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {(site.site_json?.services || []).map((service) => (
-                  <div
-                    key={service}
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
-                  >
-                    {service}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {site.site_json?.emergency && (
-              <section>
-                <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                  Emergency Services
-                </div>
-                <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
-                  {site.site_json.emergency}
-                </div>
-              </section>
-            )}
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                About
-              </div>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.about || "Professional plumbing services"}
-              </p>
-            </section>
-          </div>
-        );
-
-      case "dentist":
-        return (
-          <div className="space-y-8">
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Hero
-              </div>
-              <h2 className="mt-3 text-4xl font-semibold">
-                {site.site_json?.headline || site.business_name}
-              </h2>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.subheadline || "Comprehensive dental care"}
-              </p>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Services
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {(site.site_json?.services || []).map((service) => (
-                  <div
-                    key={service}
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
-                  >
-                    {service}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {site.site_json?.testimonials && site.site_json.testimonials.length > 0 && (
-              <section>
-                <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                  Patient Testimonials
-                </div>
-                <div className="mt-4 space-y-4">
-                  {site.site_json.testimonials.map((testimonial, index) => (
-                    <div
-                      key={index}
-                      className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
-                    >
-                      "{testimonial}"
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                About
-              </div>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.about || "Comprehensive dental care"}
-              </p>
-            </section>
-          </div>
-        );
-
-      case "restaurant":
-        return (
-          <div className="space-y-8">
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Hero
-              </div>
-              <h2 className="mt-3 text-4xl font-semibold">
-                {site.site_json?.headline || site.business_name}
-              </h2>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.subheadline || "Fine dining experience"}
-              </p>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Menu Highlights
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {(site.site_json?.menu_highlights || []).map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                About
-              </div>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.about || "Fine dining experience"}
-              </p>
-            </section>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {site.site_json?.hours && (
-                <section>
-                  <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                    Hours
-                  </div>
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">
-                    {site.site_json.hours}
-                  </div>
-                </section>
-              )}
-
-              {site.site_json?.location && (
-                <section>
-                  <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                    Location
-                  </div>
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">
-                    {site.site_json.location}
-                  </div>
-                </section>
-              )}
-            </div>
-          </div>
-        );
-
-      case "barber":
-        return (
-          <div className="space-y-8">
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Hero
-              </div>
-              <h2 className="mt-3 text-4xl font-semibold">
-                {site.site_json?.headline || site.business_name}
-              </h2>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.subheadline || "Professional barber services"}
-              </p>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Services
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {(site.site_json?.services || []).map((service) => (
-                  <div
-                    key={service}
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
-                  >
-                    {service}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {site.site_json?.team && site.site_json.team.length > 0 && (
-              <section>
-                <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                  Our Team
-                </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {site.site_json.team.map((member, index) => (
-                    <div
-                      key={index}
-                      className="rounded-2xl border border-white/10 bg-black/30 p-4"
-                    >
-                      <div className="font-medium">{member.name}</div>
-                      <div className="text-sm text-zinc-400">{member.role}</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                About
-              </div>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.about || "Professional barber services"}
-              </p>
-            </section>
-          </div>
-        );
-
-      default:
-        return (
-          <div className="space-y-8">
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Hero
-              </div>
-              <h2 className="mt-3 text-4xl font-semibold">
-                {site.site_json?.headline || site.business_name}
-              </h2>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.subheadline || "Your business website"}
-              </p>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                Services
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {(site.site_json?.services || []).map((service) => (
-                  <div
-                    key={service}
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300"
-                  >
-                    {service}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <div className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                About
-              </div>
-              <p className="mt-4 text-zinc-400">
-                {site.site_json?.about || "Your business description"}
-              </p>
-            </section>
-          </div>
-        );
-    }
-  };
 
   return (
     <main className="min-h-screen bg-black px-6 py-20 text-white">
@@ -434,7 +264,9 @@ export default function AdminSiteDetailPage() {
               Preview — Not Live
             </div>
           )}
-          {renderTemplateContent()}
+          
+          {renderNavigation()}
+          {renderPageContent()}
         </div>
       </div>
     </main>
