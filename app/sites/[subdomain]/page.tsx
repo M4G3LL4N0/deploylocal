@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 import { useParams } from "next/navigation";
 
 type PageContent = {
@@ -58,28 +60,55 @@ type GeneratedSite = {
 
 export default function AdminSiteDetailPage() {
   const supabase = createClient();
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [site, setSite] = useState<GeneratedSite | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('home');
+  const [accessGranted, setAccessGranted] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
 
   useEffect(() => {
-    async function loadSite() {
+    async function checkAccess() {
       const { data } = await supabase
         .from("generated_sites")
         .select("*")
         .eq("id", id)
         .single();
 
-      setSite((data as GeneratedSite | null) ?? null);
+      if (!data) {
+        router.push('/');
+        return;
+      }
+
+      const siteData = data as GeneratedSite;
+      
+      // Check preview token
+      const searchParams = new URLSearchParams(window.location.search);
+      const previewToken = searchParams.get('token');
+      const isValidPreview = previewToken === siteData.preview_token;
+
+      // Check user access
+      const currentUser = await getCurrentUser();
+      const isAdmin = currentUser.profile?.role === 'admin';
+      const isAssignedClient = currentUser.user?.id === siteData.client_user_id;
+
+      if (isValidPreview || isAdmin || isAssignedClient) {
+        setAccessGranted(true);
+        setIsPreview(isValidPreview);
+        setSite(siteData);
+      } else {
+        router.push('/');
+      }
+
       setLoading(false);
     }
 
     if (id) {
-      loadSite();
+      checkAccess();
     }
-  }, [id, supabase]);
+  }, [id, supabase, router]);
 
   function renderPageContent() {
     if (!site) return null;
@@ -180,17 +209,17 @@ export default function AdminSiteDetailPage() {
     return (
       <main className="min-h-screen bg-black px-6 py-20 text-white">
         <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 text-zinc-500">
-          Loading site...
+          Verifying access...
         </div>
       </main>
     );
   }
 
-  if (!site) {
+  if (!accessGranted || !site) {
     return (
       <main className="min-h-screen bg-black px-6 py-20 text-white">
         <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-6 text-zinc-500">
-          Site not found.
+          Access denied
         </div>
       </main>
     );
@@ -199,7 +228,12 @@ export default function AdminSiteDetailPage() {
   const previewUrl = `/sites/${site.subdomain}${site.preview_token ? `?token=${site.preview_token}` : ""}`;
 
   return (
-    <main className="min-h-screen bg-black px-6 py-20 text-white">
+    <main className="min-h-screen bg-black px-6 py-20 text-white relative">
+      {isPreview && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-black text-center py-2 font-medium z-50">
+          Preview Mode - This site is not publicly visible
+        </div>
+      )}
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
