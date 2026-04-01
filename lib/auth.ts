@@ -2,18 +2,31 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ApiResponse } from "@/types";
 
-type Profile = {
+/**
+ * Represents a user profile in the system
+ */
+export type Profile = {
   id: string;
   email: string | null;
   role: "admin" | "client";
   created_at: string;
 };
 
-export async function getCurrentUser(): Promise<{
+/**
+ * Represents the current authenticated user
+ */
+export type CurrentUser = {
   supabase: ReturnType<typeof createClient>;
   user: { id: string; email?: string | null } | null;
   profile: Profile | null;
-}> {
+};
+
+/**
+ * Gets the currently authenticated user with their profile
+ * @returns Promise<CurrentUser>
+ * @throws Error if authentication fails
+ */
+export async function getCurrentUser(): Promise<CurrentUser> {
   try {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -40,30 +53,71 @@ export async function getCurrentUser(): Promise<{
   }
 }
 
-export async function requireAdmin() {
+/**
+ * Checks if the current user has admin role
+ * @returns Promise<CurrentUser>
+ * @throws Redirects to login if not authenticated
+ * @throws Redirects to home if not admin
+ */
+export async function requireAdmin(): Promise<CurrentUser> {
   const { supabase, user, profile } = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (!profile || profile.role !== "admin") {
-    redirect("/");
-  }
+  if (!user) redirect("/login");
+  if (!profile || profile.role !== "admin") redirect("/");
 
   return { supabase, user, profile };
 }
 
-export async function requireClient() {
+/**
+ * Checks if the current user has client role
+ * @returns Promise<CurrentUser>
+ * @throws Redirects to login if not authenticated
+ * @throws Redirects to home if not client
+ */
+export async function requireClient(): Promise<CurrentUser> {
   const { supabase, user, profile } = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (!profile || profile.role !== "client") {
-    redirect("/");
-  }
+  if (!user) redirect("/login");
+  if (!profile || profile.role !== "client") redirect("/");
 
   return { supabase, user, profile };
+}
+
+/**
+ * Utility to check if user is authenticated
+ * @returns Promise<boolean>
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  try {
+    const { user } = await getCurrentUser();
+    return !!user;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Utility to check if user has admin role
+ * @returns Promise<boolean>
+ */
+export async function isAdmin(): Promise<boolean> {
+  try {
+    const { profile } = await requireAdmin();
+    return !!profile;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Utility to check if user has client role
+ * @returns Promise<boolean>
+ */
+export async function isClient(): Promise<boolean> {
+  try {
+    const { profile } = await requireClient();
+    return !!profile;
+  } catch {
+    return false;
+  }
 }
