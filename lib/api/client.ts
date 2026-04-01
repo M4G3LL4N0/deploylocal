@@ -44,10 +44,38 @@ type SiteInput = {
   leadId: string;
 };
 
+type TemplateKey = "plumber" | "dentist" | "restaurant" | "barber" | "default";
+
+type TemplatePages = {
+  home: {
+    headline: string;
+    subheadline: string;
+  };
+  services: {
+    headline: string;
+    sections: {
+      title: string;
+      items: string[];
+    }[];
+  };
+  about: {
+    headline: string;
+    content: string;
+  };
+  contact: {
+    headline: string;
+    cta: string;
+  };
+};
+
 type Template = {
-  type: string;
+  key: TemplateKey;
   layout: string;
-  sections: string[];
+  pages: TemplatePages;
+  faq: {
+    question: string;
+    answer: string;
+  }[];
 };
 
 type SiteResponse = {
@@ -62,6 +90,11 @@ type SiteResponse = {
     preview_token: string | null;
     client_user_id: string | null;
     template: Template;
+    pages: TemplatePages;
+    faq: {
+      question: string;
+      answer: string;
+    }[];
   };
 };
 
@@ -136,12 +169,30 @@ export async function bulkGenerateSites(leadIds: string[]): Promise<{
   });
 }
 
+const TEMPLATE_MAP: Record<string, TemplateKey> = {
+  "plumber": "plumber",
+  "electrician": "plumber",
+  "contractor": "plumber",
+  "dentist": "dentist",
+  "orthodontist": "dentist",
+  "restaurant": "restaurant",
+  "cafe": "restaurant",
+  "barber": "barber",
+  "salon": "barber",
+};
+
+function getTemplateKey(category: string): TemplateKey {
+  const lowerCategory = category.toLowerCase();
+  return TEMPLATE_MAP[lowerCategory] || "default";
+}
+
 export async function generateSite({
   businessName,
   category,
   city,
   leadId,
 }: SiteInput) {
+  const templateKey = getTemplateKey(category);
   const { data: user } = await supabase.auth.getUser();
 
   if (!user) {
@@ -158,6 +209,7 @@ export async function generateSite({
       category,
       city,
       leadId,
+      templateKey,
     }),
   });
 
@@ -196,6 +248,39 @@ export async function createInvite({
   }
 
   return (await response.json()) as { claimUrl: string };
+}
+
+function validateTemplatePages(pages: TemplatePages): TemplatePages {
+  return {
+    home: {
+      headline: pages.home.headline || "Welcome to Our Business",
+      subheadline: pages.home.subheadline || "Quality services you can trust",
+    },
+    services: {
+      headline: pages.services.headline || "Our Services",
+      sections: pages.services.sections.map(section => ({
+        title: section.title || "Service",
+        items: section.items.filter(item => item.trim().length > 0)
+      })).filter(section => section.items.length > 0)
+    },
+    about: {
+      headline: pages.about.headline || "About Us",
+      content: pages.about.content || "We are a trusted local business dedicated to serving our community."
+    },
+    contact: {
+      headline: pages.contact.headline || "Contact Us",
+      cta: pages.contact.cta || "Get in touch today!"
+    }
+  };
+}
+
+function validateFAQ(faq: { question: string; answer: string }[]) {
+  return faq
+    .filter(item => item.question.trim().length > 0 && item.answer.trim().length > 0)
+    .map(item => ({
+      question: item.question.endsWith("?") ? item.question : `${item.question}?`,
+      answer: item.answer
+    }));
 }
 
 export async function claimSite({
