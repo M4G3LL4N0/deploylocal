@@ -26,10 +26,12 @@ export type CurrentUser = {
  * @returns Promise<CurrentUser>
  * @throws Error if authentication fails
  */
+'use server'
+
 export async function getCurrentUser(): Promise<CurrentUser> {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const supabase = createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     if (!user || error) {
       return { supabase, user: null, profile: null };
