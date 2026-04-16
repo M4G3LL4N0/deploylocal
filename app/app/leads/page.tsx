@@ -84,14 +84,10 @@ export default function LeadsPage() {
     setMessage("");
 
     try {
-      const { data: user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("Unauthorized");
-      }
-
-      if (!user) {
-        throw new Error("Please log in first.");
+        throw new Error("Unauthorized - Please log in first.");
       }
 
       const response = await saveLeads(results);
@@ -114,21 +110,14 @@ export default function LeadsPage() {
         throw new Error("Select at least one lead first.");
       }
 
-      const { data: user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("Unauthorized");
-      }
-
-      if (!user) {
-        throw new Error("Please log in first.");
+        throw new Error("Unauthorized - Please log in first.");
       }
 
       const saveResponse = await saveLeads(results);
-      if (!user) {
-        throw new Error("User not found");
-      }
-
+      
       const { data: savedLeads, error: leadsError } = await supabase
         .from("leads")
         .select("*")
