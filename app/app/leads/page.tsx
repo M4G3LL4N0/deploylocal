@@ -125,6 +125,10 @@ export default function LeadsPage() {
       }
 
       const saveResponse = await saveLeads(results);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
       const { data: savedLeads, error: leadsError } = await supabase
         .from("leads")
         .select("*")
