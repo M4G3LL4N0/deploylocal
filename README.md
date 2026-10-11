@@ -1,101 +1,66 @@
-# deploylocal
+# DeployLocal
 
-> Lead discovery and outreach infrastructure for local businesses that need a web presence and pipeline. Built in OpenAI SDK, Stripe, Supabase. 24 routes (/api/bulk-generate-sites, /api/checkout, /api/claim-site); 17 entry points (index.ts). TESTED: 14 test files, via Playwright.
+> A bounded website operations loop for finding, evaluating, previewing, and fulfilling local-business web work.
 
-The implementation summary below is intentionally conservative. Claims from NORTHSTAR are not presented as shipped functionality.
+A working-tree system for local-business prospect discovery, website auditing, stored preview generation, outreach controls, checkout, fulfillment, and revenue operations; the product identity remains unresolved against SiteCloser.
 
-- [GitHub repository](https://github.com/M4G3LL4N0/deploylocal)
-- [Project site](https://deploylocal.vercel.app)
+[NOAERTH](https://www.noaerth.com)
 
-<!-- NOAERTH_IMAGE_SLOT: deploylocal/hero -->
+![DeployLocal service yard](assets/images/hero.svg)
 
-## What it is
+## Read this repository as two snapshots
 
-Lead discovery and outreach infrastructure for local businesses that need a web presence and pipeline. Built in OpenAI SDK, Stripe, Supabase. 24 routes (/api/bulk-generate-sites, /api/checkout, /api/claim-site); 17 entry points (index.ts). TESTED: 14 test files, via Playwright.
+The current working tree contains a substantial SiteCloser-style prospecting, preview, outreach, checkout, fulfillment, revenue, and operator-TUI system. Committed history and the public repository still reflect an older DeployLocal lead/site-generation application. `PRODUCT_DIRECTION_DECISION.md` leaves that identity fork open. This README describes the verified working-tree direction without pretending it is a clean release.
 
-This repository is part of the NOAERTH venture ecosystem. The current public-facing evidence identifies it as a early-stage project rather than a production-ready system.
+![DeployLocal operating pipeline](assets/images/pipeline.svg)
 
-## Capabilities
+## Verified operating loop
 
-### Available evidence
-
-- The repository contains the implementation and documentation associated with the project description above.
-- The technology signals currently visible in the local project are listed in the technical notes below.
-- No additional capability is asserted here without a direct implementation reference.
-
-### Experimental or planned
-
-Roadmap intent is deliberately not represented as shipped functionality. Review NORTHSTAR and source implementation together before adding future-facing claims.
-
-<!-- NOAERTH_IMAGE_SLOT: deploylocal/workflow -->
-
-## How it works
-
-The current evidence supports a repository-level application or tool workflow, but does not provide enough verified detail in the Part 1 record to publish a component-level architecture diagram. The architecture slot is reserved for a deterministic diagram after the source flow is reviewed.
-
-<!-- NOAERTH_IMAGE_SLOT: deploylocal/architecture -->
-
-## Quick start
-
-### Prerequisites
-
-- A runtime suitable for `Node.js`.
-- A clean checkout of this repository.
-
-### Install
-
-```sh
-pnpm install
+```text
+sources → normalize/dedupe → audit → score → WebsiteSpec → stored HTML → fail-closed QA → preview/outreach → checkout → fulfillment
 ```
 
-### Run locally
+Stored HTML previews are served through a dedicated route with QA/no-store/CSP/robots controls. Revenue code models explicit offer acceptance, server-derived prices, idempotent provider events, deposit/full-payment boundaries, and bounded controller modes. These are source claims; live providers were not exercised.
 
-```sh
-pnpm run dev
+## Operator safety
+
+![DeployLocal safety controls](assets/images/safety-controls.svg)
+
+The controller modes are `demo`, `shadow`, `pilot`, and `autonomous`, with persisted pause switches for discovery, generation, outreach, purchases, and fulfillment. The TUI is designed as a read-only domain projection and tests assert that it does not start workers or send mail.
+
+## Evaluation commands
+
+```bash
+`pnpm install`
+`pnpm test`
+`pnpm dev`
 ```
 
-### Build
+The local repository includes synthetic weak/strong/parked website fixtures for offline evaluation. No production revenue, conversion, deliverability, customer, or provider metric is claimed here.
 
-```sh
-pnpm run build
-```
+## Evidence snapshot
 
-### Test
+| Evidence | Interpretation |
+|---|---|
+| 4 documented operating modes | Source-backed; see `v4/VERIFIED_METRICS.json` for definition and status. |
+| 5 local synthetic website fixtures | Source-backed; see `v4/VERIFIED_METRICS.json` for definition and status. |
+| 1 stored preview route serving QA-approved HTML | Source-backed; see `v4/VERIFIED_METRICS.json` for definition and status. |
 
-```sh
-pnpm run test
-```
+## Limits and release boundary
 
-Commands are included only when they were detected in the repository manifest; verify environment-specific requirements before deployment.
+- Product identity and clean release boundary remain unresolved.
+- Live providers, revenue, deliverability, and domain operations were not verified.
+- Legal/compliance review remains open.
 
-## Technical notes
+## Source map
 
-- **Primary language:** JavaScript/TypeScript
-- **Runtime:** Node.js
-- **Package manager:** pnpm
-- **Framework and integration signals:** See the source tree and package manifests; no framework claim is made here without a direct implementation reference.
-- **Entry-point signals:** package.json
-- **Test evidence:** No test evidence recorded in the inventory
-- **Repository topics:** `react`, `typescript`, `app`, `components`, `index`, `next-js`, `openai-sdk`, `playwright`
+- `src/sources`
+- `src/audit`
+- `src/render`
+- `src/app/p/[slug]/route.ts`
+- `src/revenue/controller.ts`
+- `tests/revenue-loop.test.ts`
 
-## Status and roadmap
+## Status
 
-**Current status:** Early-stage project.
-
-**Current:** The repository and its documented implementation are available for inspection.
-
-**Next:** Reconcile the README, source behavior, and safe public product language before adding deeper examples or diagrams.
-
-**Future:** Product direction is maintained separately and must not be read as a shipped feature list.
-
-## Contributing and license
-
-Follow the repository's existing contribution and licensing files where present. This README does not invent an open-source license or contribution policy.
-
-## Visual documentation
-
-Image slots are intentionally comments until authentic screenshots, deterministic diagrams, or approved conceptual visuals exist. No absent image file is referenced.
-
-## NOAERTH
-
-[NOAERTH](https://www.noaerth.com) is the venture ecosystem associated with this project.
+Working-tree prototype under active reconstruction. Resolve the DeployLocal/SiteCloser product decision and commit boundary before calling this a stable public product.
